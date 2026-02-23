@@ -1,0 +1,11 @@
+node_modules
+npm-debug.log
+dist
+.expo
+.expo-shared
+.env
+.git
+.gitignore
+.idea
+.vscode
+*.tsbuildinfo
