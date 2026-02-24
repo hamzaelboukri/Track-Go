@@ -1,0 +1,63 @@
+{
+  "parcels": [
+    {
+      "id": "COL001",
+      "recipient": "Jean Dupont",
+      "address": "12 Rue de la Paix, Paris",
+      "status": "pending",
+      "expectedDelivery": "2026-02-24T10:00:00Z",
+      "geo": { "lat": 48.867, "lng": 2.331 },
+      "barcode": "123456789012",
+      "incident": null,
+      "proof": null
+    },
+    {
+      "id": "COL002",
+      "recipient": "Marie Curie",
+      "address": "5 Avenue Victor Hugo, Paris",
+      "status": "pending",
+      "expectedDelivery": "2026-02-24T11:00:00Z",
+      "geo": { "lat": 48.873, "lng": 2.295 },
+      "barcode": "987654321098",
+      "incident": null,
+      "proof": null
+    },
+    {
+      "id": "COL003",
+      "recipient": "Paul Martin",
+      "address": "22 Boulevard Saint-Germain, Paris",
+      "status": "pending",
+      "expectedDelivery": "2026-02-24T12:00:00Z",
+      "geo": { "lat": 48.852, "lng": 2.347 },
+      "barcode": "112233445566",
+      "incident": null,
+      "proof": null
+    }
+  ],
+  "users": [
+    {
+      "id": "LIV001",
+      "name": "Alice Livreur",
+      "email": "alice@trackgo.com",
+      "password": "hashedpassword1",
+      "role": "livreur"
+    },
+    {
+      "id": "LIV002",
+      "name": "Bob Livreur",
+      "email": "bob@trackgo.com",
+      "password": "hashedpassword2",
+      "role": "livreur"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "INC001",
+      "parcelId": "COL002",
+      "type": "Destinataire absent",
+      "photo": null,
+      "comment": "Personne n'a répondu à l'adresse.",
+      "timestamp": "2026-02-24T11:30:00Z"
+    }
+  ]
+}
