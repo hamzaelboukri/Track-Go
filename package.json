@@ -10,6 +10,7 @@
     "server": "cross-env NODE_ENV=development tsx server/index.ts",
     "dev": "concurrently \"npm run server\" \"npm run start\"",
     "lint": "expo lint",
+    "test": "jest",
     "lint:fix": "expo lint --fix",
     "db:push": "drizzle-kit push"
   },
@@ -65,6 +66,7 @@
     "@babel/core": "^7.25.2",
     "@expo/ngrok": "^4.1.0",
     "@types/express": "^5.0.0",
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.1.10",
     "babel-plugin-react-compiler": "^19.0.0-beta-e993439-20250117",
     "concurrently": "^9.2.1",
@@ -72,7 +74,9 @@
     "drizzle-kit": "^0.31.4",
     "eslint": "^9.31.0",
     "eslint-config-expo": "~10.0.0",
+    "jest": "^30.2.0",
     "patch-package": "^8.0.0",
+    "ts-jest": "^29.4.6",
     "typescript": "~5.9.2"
   },
   "private": true

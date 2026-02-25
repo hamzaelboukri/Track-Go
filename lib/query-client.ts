@@ -6,16 +6,13 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
  * @returns {string} The API base URL
  */
 export function getApiUrl(): string {
-  let host = process.env.EXPO_PUBLIC_DOMAIN;
-
-  if (!host) {
-    throw new Error("EXPO_PUBLIC_DOMAIN is not set");
+  const domain = process.env.EXPO_PUBLIC_DOMAIN;
+  if (!domain) {
+    return 'http://localhost:3000';
   }
-
-  let url = new URL(`https://${host}`);
-
-  return url.href;
+  return domain;
 }
+
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
