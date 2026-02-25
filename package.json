@@ -1,5 +1,5 @@
 {
-  "name": "expo-app",
+  "name": "koligo",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
@@ -7,8 +7,11 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "server": "tsx server/index.ts",
-    "dev": "concurrently \"npm run server\" \"npm run start\""
+    "server": "NODE_ENV=development tsx server/index.ts",
+    "dev": "concurrently \"npm run server\" \"npm run start\"",
+    "lint": "expo lint",
+    "lint:fix": "expo lint --fix",
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
@@ -64,6 +67,7 @@
     "@types/express": "^5.0.0",
     "@types/react": "~19.1.10",
     "babel-plugin-react-compiler": "^19.0.0-beta-e993439-20250117",
+    "concurrently": "^9.2.1",
     "drizzle-kit": "^0.31.4",
     "eslint": "^9.31.0",
     "eslint-config-expo": "~10.0.0",
