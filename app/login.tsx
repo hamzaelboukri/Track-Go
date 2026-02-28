@@ -65,7 +65,7 @@ export default function LoginScreen() {
           </View>
           <Text style={[styles.appName, { color: colors.text }]}>KoliGo</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Gestion de livraison dernier kilometre
+            Gestion de livraison dernier kilometre (KOLI-13)
           </Text>
         </View>
 
