@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Platform, Pressable } from "react-native";
+import { View, Text, StyleSheet, Platform, Pressable, ScrollView, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -20,7 +20,7 @@ try {
 export default function MapScreen() {
   const { colors, isDark } = useAppTheme();
   const insets = useSafeAreaInsets();
-  const { tour, isLoading } = useTournee();
+  const { tour, isLoading, isRefreshing, refetch } = useTournee();
   const webTopInset = Platform.OS === "web" ? 67 : 0;
 
   if (isLoading) return <LoadingScreen message="Chargement de la carte..." />;
@@ -37,7 +37,13 @@ export default function MapScreen() {
             {pendingParcels.length} point(s) restant(s)
           </Text>
         </View>
-        <View style={styles.listFallback}>
+        <ScrollView
+          style={styles.listFallback}
+          contentContainerStyle={{ gap: 8 }}
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={refetch} tintColor={colors.primary} />
+          }
+        >
           {parcels.map((parcel) => (
             <Pressable
               key={parcel.id}
@@ -54,7 +60,7 @@ export default function MapScreen() {
               <StatusBadge status={parcel.status} size="small" />
             </Pressable>
           ))}
-        </View>
+        </ScrollView>
       </View>
     );
   }

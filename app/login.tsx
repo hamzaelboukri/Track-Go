@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "@/contexts/AuthContext";
@@ -60,9 +61,11 @@ export default function LoginScreen() {
     >
       <View style={[styles.content, { paddingTop: insets.top + webTopInset + 40, paddingBottom: insets.bottom + 20 }]}>
         <View style={styles.logoContainer}>
-          <View style={[styles.logoIcon, { backgroundColor: colors.primary }]}>
-            <Ionicons name="cube" size={36} color="#fff" />
-          </View>
+          <Image
+            source={require("@/assets/images/icon.png")}
+            style={styles.logoImage}
+            contentFit="contain"
+          />
           <Text style={[styles.appName, { color: colors.text }]}>KoliGo</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Gestion de livraison dernier kilometre (KOLI-13)
@@ -163,12 +166,9 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     gap: 8,
   },
-  logoIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
+  logoImage: {
+    width: 100,
+    height: 100,
     marginBottom: 8,
   },
   appName: {
