@@ -117,8 +117,9 @@ export default function ParcelDetailScreen() {
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
           <View style={styles.cardTitleRow}>
             <Text style={[styles.cardTitle, { color: colors.text }]}>Adresse</Text>
-            <Pressable onPress={openMaps} hitSlop={10}>
-              <Ionicons name="navigate-outline" size={20} color={colors.info} />
+            <Pressable onPress={openMaps} hitSlop={10} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.primary + '22', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 }}>
+              <Ionicons name="location-outline" size={20} color={colors.primary} />
+              <Text style={{ color: colors.primary, fontWeight: 'bold', marginLeft: 4 }}>Voir sur la carte</Text>
             </Pressable>
           </View>
           <View style={styles.cardRow}>
