@@ -46,7 +46,12 @@ export default function ScanScreen() {
   ).length || 0;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top + webTopInset }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top + webTopInset }]}> 
+      <View style={{ backgroundColor: '#007AFF', padding: 8, alignItems: 'center', marginBottom: 8, borderRadius: 8, marginHorizontal: 8 }}>
+        <Text style={{ color: '#fff', fontWeight: 'bold' }}>
+          Tâche en cours: Accès Scan depuis Détail Colis
+        </Text>
+      </View>
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>Scanner un colis</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
