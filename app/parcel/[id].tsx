@@ -62,6 +62,23 @@ export default function ParcelDetailScreen() {
           headerBackTitle: "Retour",
         }}
       />
+      <View style={{ alignItems: "flex-end", margin: 16 }}>
+        <Pressable
+          onPress={() => router.push("/(tabs)/scan")}
+          style={({ pressed }) => [{
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: colors.primary,
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            borderRadius: 8,
+            opacity: pressed ? 0.7 : 1,
+          }]}
+        >
+          <Ionicons name="scan" size={20} color="#fff" style={{ marginRight: 8 }} />
+          <Text style={{ color: "#fff", fontWeight: "bold" }}>Accéder au scan</Text>
+        </Pressable>
+      </View>
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
         contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
