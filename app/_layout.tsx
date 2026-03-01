@@ -17,10 +17,15 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isLoading) return;
+    const inOnboarding = segments[0] === "onboarding";
     const inAuthGroup = segments[0] === "login";
-    if (!isAuthenticated && !inAuthGroup) {
-      router.replace("/login");
-    } else if (isAuthenticated && inAuthGroup) {
+    if (!isAuthenticated && !inOnboarding && !inAuthGroup) {
+      router.replace("/onboarding");
+    } else if (!isAuthenticated && inOnboarding) {
+      // Stay on onboarding
+    } else if (!isAuthenticated && inAuthGroup) {
+      // Stay on login
+    } else if (isAuthenticated && (inOnboarding || inAuthGroup)) {
       router.replace("/(tabs)");
     }
   }, [isAuthenticated, isLoading, segments]);
@@ -31,6 +36,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 function RootLayoutNav() {
   return (
     <Stack screenOptions={{ headerBackTitle: "Retour" }}>
+      <Stack.Screen name="onboarding" options={{ headerShown: false }} />
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="parcel" options={{ headerShown: false }} />

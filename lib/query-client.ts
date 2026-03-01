@@ -12,9 +12,12 @@ export function getApiUrl(): string {
     throw new Error("EXPO_PUBLIC_DOMAIN is not set");
   }
 
-  let url = new URL(`https://${host}`);
-
-  return url.href;
+  // If host already starts with http:// or https://, use as is
+  if (host.startsWith("http://") || host.startsWith("https://")) {
+    return host.endsWith("/") ? host : host + "/";
+  }
+  // Otherwise, default to http
+  return `http://${host}/`;
 }
 
 async function throwIfResNotOk(res: Response) {
