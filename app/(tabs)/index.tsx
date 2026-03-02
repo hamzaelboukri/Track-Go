@@ -3,6 +3,7 @@ import { View, Text, FlatList, StyleSheet, RefreshControl, Platform } from "reac
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { useTournee } from "@/contexts/TourneeContext";
 
@@ -74,7 +75,11 @@ export default function TourneeScreen() {
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="cube-outline" size={48} color={colors.textTertiary} />
+            <Image
+              source={require("@/assets/images/icon.png")}
+              style={styles.emptyImage}
+              contentFit="contain"
+            />
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
               Aucun colis pour aujourd&apos;hui
             </Text>
@@ -135,6 +140,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 60,
     gap: 12,
+  },
+  emptyImage: {
+    width: 80,
+    height: 80,
+    opacity: 0.3,
   },
   emptyText: {
     fontSize: 15,

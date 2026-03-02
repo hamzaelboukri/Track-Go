@@ -13,6 +13,7 @@ import {
 import { useLocalSearchParams, router, Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "expo-haptics";
@@ -93,9 +94,9 @@ export default function IncidentScreen() {
 
   const incidentTypes = Object.entries(IncidentType) as [string, IncidentTypeValue][];
 
-  const typeIcons: Record<IncidentTypeValue, keyof typeof Ionicons.glyphMap> = {
+  const typeIcons: Record<IncidentTypeValue, keyof typeof Ionicons.glyphMap | "logo"> = {
     absent: "person-remove-outline",
-    damaged: "cube-outline",
+    damaged: "logo",
     wrong_address: "location-outline",
     access_denied: "lock-closed-outline",
     other: "ellipsis-horizontal-circle-outline",
@@ -128,11 +129,22 @@ export default function IncidentScreen() {
                     },
                   ]}
                 >
-                  <Ionicons
-                    name={typeIcons[value]}
-                    size={22}
-                    color={selectedType === value ? colors.primary : colors.textSecondary}
-                  />
+                  {typeIcons[value] === "logo" ? (
+                    <Image
+                      source={require("@/assets/images/icon.png")}
+                      style={[
+                        styles.typeIconImage,
+                        { tintColor: selectedType === value ? colors.primary : colors.textSecondary },
+                      ]}
+                      contentFit="contain"
+                    />
+                  ) : (
+                    <Ionicons
+                      name={typeIcons[value] as keyof typeof Ionicons.glyphMap}
+                      size={22}
+                      color={selectedType === value ? colors.primary : colors.textSecondary}
+                    />
+                  )}
                   <Text
                     style={[
                       styles.typeLabel,
@@ -253,6 +265,10 @@ const styles = StyleSheet.create({
   typeLabel: {
     fontSize: 14,
     fontWeight: "600",
+  },
+  typeIconImage: {
+    width: 22,
+    height: 22,
   },
   textArea: {
     borderWidth: 1,
