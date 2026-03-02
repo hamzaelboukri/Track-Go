@@ -7,6 +7,7 @@ import { Platform, StyleSheet, useColorScheme, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import React from "react";
 import Colors from "@/constants/colors";
+import { TourneeProvider } from "@/contexts/TourneeContext";
 
 function NativeTabLayout() {
   return (
@@ -99,8 +100,9 @@ function ClassicTabLayout() {
 }
 
 export default function TabLayout() {
-  if (isLiquidGlassAvailable()) {
-    return <NativeTabLayout />;
-  }
-  return <ClassicTabLayout />;
+  return (
+    <TourneeProvider>
+      {isLiquidGlassAvailable() ? <NativeTabLayout /> : <ClassicTabLayout />}
+    </TourneeProvider>
+  );
 }

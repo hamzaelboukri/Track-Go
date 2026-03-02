@@ -1,7 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 import { useAppTheme } from "@/hooks/useAppTheme";
-import type { ParcelStatusType } from "../shared/schema";
 
 export type FilterType = "all" | "delivered" | "pending" | "failed";
 
@@ -19,7 +18,7 @@ interface ParcelFilterProps {
 export function ParcelFilter({ activeFilter, onFilterChange, counts }: ParcelFilterProps) {
   const { colors } = useAppTheme();
 
-  const filters: Array<{ key: FilterType; label: string }> = [
+  const filters: { key: FilterType; label: string }[] = [
     { key: "all", label: "Tous" },
     { key: "delivered", label: "Livrés" },
     { key: "pending", label: "En attente" },

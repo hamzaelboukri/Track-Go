@@ -2,7 +2,6 @@ import React, { useCallback, useState, useMemo } from "react";
 import { View, Text, FlatList, StyleSheet, RefreshControl, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { useTournee } from "@/contexts/TourneeContext";

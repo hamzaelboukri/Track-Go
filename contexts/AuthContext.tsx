@@ -23,16 +23,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const loadAuth = async () => {
+      let hasAuth = false;
       try {
+        console.log("AuthContext: Loading auth from storage...");
         const storedAuth = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
         if (storedAuth) {
           const { driver: savedDriver, token: savedToken } = JSON.parse(storedAuth);
           setDriver(savedDriver);
           setToken(savedToken);
+          hasAuth = true;
+          console.log("AuthContext: Auth loaded, driver:", savedDriver?.name);
+        } else {
+          console.log("AuthContext: No stored auth found");
         }
       } catch (error) {
         console.error("Erreur chargement auth:", error);
       } finally {
+        console.log("AuthContext: Loading complete, isAuthenticated:", hasAuth);
         setIsLoading(false);
       }
     };
