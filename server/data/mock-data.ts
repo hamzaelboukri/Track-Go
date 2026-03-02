@@ -25,6 +25,7 @@ export const mockParcels: Parcel[] = [
     trackingCode: "KLG-2025-00001",
     barcode: "4006381333931",
     status: "pending",
+    driverId: "drv-001", // Assigné à Youssef Benali
     recipient: { name: "Jean Dupont", phone: "+33611111111", email: "jean.dupont@email.fr" },
     address: {
       street: "12 Rue de la Paix",
@@ -44,6 +45,7 @@ export const mockParcels: Parcel[] = [
     trackingCode: "KLG-2025-00002",
     barcode: "5901234123457",
     status: "pending",
+    driverId: "drv-001", // Assigné à Youssef Benali
     recipient: { name: "Marie Leroy", phone: "+33622222222" },
     address: {
       street: "45 Avenue des Champs-Elysees",
@@ -61,6 +63,7 @@ export const mockParcels: Parcel[] = [
     trackingCode: "KLG-2025-00003",
     barcode: "4007817525074",
     status: "pending",
+    driverId: "drv-001", // Assigné à Youssef Benali
     recipient: { name: "Pierre Bernard", phone: "+33633333333", email: "p.bernard@mail.com" },
     address: {
       street: "8 Place de la Republique",
@@ -80,6 +83,7 @@ export const mockParcels: Parcel[] = [
     trackingCode: "KLG-2025-00004",
     barcode: "8710398527844",
     status: "pending",
+    driverId: "drv-001", // Assigné à Youssef Benali
     recipient: { name: "Claire Moreau", phone: "+33644444444" },
     address: {
       street: "22 Rue de Rivoli",
@@ -97,6 +101,7 @@ export const mockParcels: Parcel[] = [
     trackingCode: "KLG-2025-00005",
     barcode: "3017620422003",
     status: "pending",
+    driverId: "drv-002", // Assigné à Sophie Martin
     recipient: { name: "Lucas Petit", phone: "+33655555555", email: "lucas.p@email.fr" },
     address: {
       street: "15 Boulevard Saint-Germain",
@@ -115,6 +120,7 @@ export const mockParcels: Parcel[] = [
     trackingCode: "KLG-2025-00006",
     barcode: "5000159484695",
     status: "pending",
+    driverId: "drv-002", // Assigné à Sophie Martin
     recipient: { name: "Emma Robert", phone: "+33666666666" },
     address: {
       street: "3 Rue Montorgueil",
@@ -133,6 +139,7 @@ export const mockParcels: Parcel[] = [
     trackingCode: "KLG-2025-00007",
     barcode: "8005110070486",
     status: "pending",
+    driverId: "drv-002", // Assigné à Sophie Martin
     recipient: { name: "Thomas Richard", phone: "+33677777777" },
     address: {
       street: "50 Rue Oberkampf",
@@ -151,6 +158,7 @@ export const mockParcels: Parcel[] = [
     trackingCode: "KLG-2025-00008",
     barcode: "7622210449283",
     status: "pending",
+    driverId: "drv-002", // Assigné à Sophie Martin
     recipient: { name: "Camille Durand", phone: "+33688888888", email: "c.durand@mail.fr" },
     address: {
       street: "28 Rue du Faubourg Saint-Antoine",
@@ -167,11 +175,15 @@ export const mockParcels: Parcel[] = [
 
 export function getMockTour(driverId: string): Tour {
   const today = new Date().toISOString().split("T")[0];
+  
+  // Filtrer les colis pour ce driver spécifique
+  const driverParcels = mockParcels.filter(parcel => parcel.driverId === driverId);
+  
   return {
     id: `tour-${today}-${driverId}`,
     driverId,
     date: today,
-    parcels: JSON.parse(JSON.stringify(mockParcels)),
+    parcels: JSON.parse(JSON.stringify(driverParcels)),
     status: "not_started",
   };
 }

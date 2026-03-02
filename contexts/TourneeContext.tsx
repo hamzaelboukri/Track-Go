@@ -1,7 +1,9 @@
-import React, { createContext, useContext, useMemo, ReactNode, useCallback } from "react";
+import React, { createContext, useContext, useMemo, ReactNode, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiService } from "@/services/api";
+import { storageService } from "@/services/storage";
 import { useAuth } from "./AuthContext";
+
 import type { Tour, TourStats, Parcel, DeliveryProof, IncidentTypeValue, GeoCoordinates } from "../shared/schema";
 
 interface TourneeContextValue {
@@ -10,11 +12,13 @@ interface TourneeContextValue {
   isLoading: boolean;
   isRefreshing: boolean;
   error: Error | null;
+  isOffline: boolean;
   refetch: () => void;
+  updateParcelStatus: (parcelId: string, status: string) => Promise<Parcel>;
   deliverParcel: (parcelId: string, proof: DeliveryProof) => Promise<Parcel>;
   reportIncident: (
-    parcelId: string,
-    data: { type: IncidentTypeValue; description: string; photoUri?: string; coordinates?: GeoCoordinates }
+      parcelId: string,
+      data: { type: IncidentTypeValue; description: string; photoUri?: string; coordinates?: GeoCoordinates }
   ) => Promise<Parcel>;
   startTour: () => Promise<Tour>;
   getParcelById: (parcelId: string) => Parcel | undefined;
@@ -23,81 +27,155 @@ interface TourneeContextValue {
 const TourneeContext = createContext<TourneeContextValue | null>(null);
 
 export function TourneeProvider({ children }: { children: ReactNode }) {
-  const { driver, token } = useAuth();
   const queryClient = useQueryClient();
+  const { driver, token } = useAuth();
   const driverId = driver?.id;
+  const [isOffline, setIsOffline] = React.useState(false);
+
+  // Charger les données depuis le cache au démarrage
+  useEffect(() => {
+    if (!driverId) return;
+
+    const loadCachedTour = async () => {
+      try {
+        const cachedTour = await storageService.getTour();
+        if (cachedTour && cachedTour.driverId === driverId) {
+          queryClient.setQueryData(["tour", driverId], cachedTour);
+        }
+      } catch (error) {
+        console.error("Erreur chargement cache:", error);
+      }
+    };
+
+    loadCachedTour();
+  }, [driverId, queryClient]);
 
   const tourQuery = useQuery<Tour>({
     queryKey: ["tour", driverId],
-    queryFn: () => apiService.getTour(driverId!, token || undefined),
+    queryFn: async () => {
+      try {
+        // KOLI-17: First, try to fetch from the API.
+        console.log("--- ATTEMPTING API FETCH (KOLI-17) ---");
+        setIsOffline(false);
+        const tour = await apiService.getTour(driverId!, token || undefined);
+        await storageService.saveTour(tour); // Cache the new data.
+        console.log("--- API FETCH AND CACHE SUCCESSFUL ---");
+        return tour;
+      } catch (error) {
+        // KOLI-18: If API fails, fall back to cache.
+        console.log("--- API FETCH FAILED, FALLING BACK TO CACHE (KOLI-18) ---");
+        setIsOffline(true);
+        const cachedTour = await storageService.getTour();
+        if (cachedTour && cachedTour.driverId === driverId) {
+          console.log("--- CACHE LOADED SUCCESSFULLY ---");
+          return cachedTour;
+        }
+        // If cache is also empty, throw error to be caught by React Query.
+        console.log("--- CACHE IS EMPTY OR INVALID, PROPAGATING ERROR ---");
+        throw new Error("Offline and no cache available.");
+      }
+    },
     enabled: !!driverId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const statsQuery = useQuery<TourStats>({
     queryKey: ["tour-stats", driverId],
     queryFn: () => apiService.getTourStats(driverId!, token || undefined),
-    enabled: !!driverId,
+    enabled: !!driverId && !isOffline,
+  });
+
+  const updateTourCache = useCallback(async (updatedParcel: Parcel) => {
+    const currentTour = queryClient.getQueryData<Tour>(["tour", driverId]);
+    if (currentTour) {
+      const updatedTour = {
+        ...currentTour,
+        parcels: currentTour.parcels.map((p) =>
+            p.id === updatedParcel.id ? updatedParcel : p
+        ),
+      };
+      queryClient.setQueryData(["tour", driverId], updatedTour);
+      await storageService.saveTour(updatedTour);
+    }
+  }, [driverId, queryClient]);
+
+  // KOLI-19: Mutation pour changer le statut d'un colis
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ parcelId, status }: { parcelId: string; status: string }) =>
+        apiService.updateParcelStatus(driverId!, parcelId, status, token || undefined),
+    onSuccess: async (updatedParcel) => {
+      await updateTourCache(updatedParcel);
+      void queryClient.invalidateQueries({ queryKey: ["tour", driverId] });
+      void queryClient.invalidateQueries({ queryKey: ["tour-stats", driverId] });
+    },
   });
 
   const deliverMutation = useMutation({
     mutationFn: ({ parcelId, proof }: { parcelId: string; proof: DeliveryProof }) =>
-      apiService.deliverParcel(driverId!, parcelId, proof, token || undefined),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tour", driverId] });
-      queryClient.invalidateQueries({ queryKey: ["tour-stats", driverId] });
+        apiService.deliverParcel(driverId!, parcelId, proof, token || undefined),
+    onSuccess: async (updatedParcel) => {
+      await updateTourCache(updatedParcel);
+      void queryClient.invalidateQueries({ queryKey: ["tour", driverId] });
+      void queryClient.invalidateQueries({ queryKey: ["tour-stats", driverId] });
     },
   });
 
   const incidentMutation = useMutation({
     mutationFn: ({
-      parcelId,
-      data,
-    }: {
+                   parcelId,
+                   data,
+                 }: {
       parcelId: string;
       data: { type: IncidentTypeValue; description: string; photoUri?: string; coordinates?: GeoCoordinates };
     }) => apiService.reportIncident(driverId!, parcelId, data, token || undefined),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tour", driverId] });
-      queryClient.invalidateQueries({ queryKey: ["tour-stats", driverId] });
+    onSuccess: async (updatedParcel) => {
+      await updateTourCache(updatedParcel);
+      void queryClient.invalidateQueries({ queryKey: ["tour", driverId] });
+      void queryClient.invalidateQueries({ queryKey: ["tour-stats", driverId] });
     },
   });
 
   const startTourMutation = useMutation({
     mutationFn: () => apiService.startTour(driverId!, token || undefined),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tour", driverId] });
-      queryClient.invalidateQueries({ queryKey: ["tour-stats", driverId] });
+    onSuccess: async (updatedTour) => {
+      queryClient.setQueryData(["tour", driverId], updatedTour);
+      await storageService.saveTour(updatedTour);
+      void queryClient.invalidateQueries({ queryKey: ["tour", driverId] });
+      void queryClient.invalidateQueries({ queryKey: ["tour-stats", driverId] });
     },
   });
 
   const refetch = useCallback(() => {
     tourQuery.refetch();
     statsQuery.refetch();
-  }, []);
+  }, [tourQuery, statsQuery]);
 
   const getParcelById = useCallback(
-    (parcelId: string) => tourQuery.data?.parcels.find((p) => p.id === parcelId),
-    [tourQuery.data]
+      (parcelId: string) => tourQuery.data?.parcels.find((p) => p.id === parcelId),
+      [tourQuery.data]
   );
 
   const value = useMemo(
-    () => ({
-      tour: tourQuery.data || null,
-      stats: statsQuery.data || null,
-      isLoading: tourQuery.isLoading || statsQuery.isLoading,
-      isRefreshing: tourQuery.isRefetching || statsQuery.isRefetching,
-      error: tourQuery.error || statsQuery.error,
-      refetch,
-      deliverParcel: (parcelId: string, proof: DeliveryProof) =>
-        deliverMutation.mutateAsync({ parcelId, proof }),
-      reportIncident: (
-        parcelId: string,
-        data: { type: IncidentTypeValue; description: string; photoUri?: string; coordinates?: GeoCoordinates }
-      ) => incidentMutation.mutateAsync({ parcelId, data }),
-      startTour: () => startTourMutation.mutateAsync(),
-      getParcelById,
-    }),
-    [tourQuery.data, statsQuery.data, tourQuery.isLoading, statsQuery.isLoading, tourQuery.isRefetching, statsQuery.isRefetching, tourQuery.error, statsQuery.error, getParcelById]
+      () => ({
+        tour: tourQuery.data || null,
+        stats: statsQuery.data || null,
+        isLoading: tourQuery.isLoading || statsQuery.isLoading,
+        isRefreshing: tourQuery.isRefetching || statsQuery.isRefetching,
+        error: tourQuery.error || statsQuery.error,
+        isOffline,
+        refetch,
+        updateParcelStatus: (parcelId: string, status: string) =>
+            updateStatusMutation.mutateAsync({ parcelId, status }),
+        deliverParcel: (parcelId: string, proof: DeliveryProof) =>
+            deliverMutation.mutateAsync({ parcelId, proof }),
+        reportIncident: (
+            parcelId: string,
+            data: { type: IncidentTypeValue; description: string; photoUri?: string; coordinates?: GeoCoordinates }
+        ) => incidentMutation.mutateAsync({ parcelId, data }),
+        startTour: () => startTourMutation.mutateAsync(),
+        getParcelById,
+      }),
+      [tourQuery.data, statsQuery.data, tourQuery.isLoading, statsQuery.isLoading, tourQuery.isRefetching, statsQuery.isRefetching, tourQuery.error, statsQuery.error, isOffline, getParcelById, refetch, updateStatusMutation, deliverMutation, incidentMutation, startTourMutation]
   );
 
   return <TourneeContext.Provider value={value}>{children}</TourneeContext.Provider>;

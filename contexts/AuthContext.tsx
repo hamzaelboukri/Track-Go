@@ -22,43 +22,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadStoredAuth();
+    const loadAuth = async () => {
+      try {
+        const storedAuth = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
+        if (storedAuth) {
+          const { driver: savedDriver, token: savedToken } = JSON.parse(storedAuth);
+          setDriver(savedDriver);
+          setToken(savedToken);
+        }
+      } catch (error) {
+        console.error("Erreur chargement auth:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadAuth();
   }, []);
 
-  async function loadStoredAuth() {
+  const login = async (input: LoginInput) => {
     try {
-      const stored = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as AuthResponse;
-        setDriver(parsed.driver);
-        setToken(parsed.token);
-      }
-    } catch (e) {
-      console.error("Failed to load auth:", e);
-    } finally {
-      setIsLoading(false);
+      const response: AuthResponse = await apiService.login(input);
+      setDriver(response.driver);
+      setToken(response.token);
+      await AsyncStorage.setItem(
+        AUTH_STORAGE_KEY,
+        JSON.stringify({ driver: response.driver, token: response.token })
+      );
+    } catch (error) {
+      throw error;
     }
-  }
+  };
 
-  async function login(input: LoginInput) {
-    const response = await apiService.login(input);
-    setDriver(response.driver);
-    setToken(response.token);
-    await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(response));
-  }
-
-  async function logout() {
+  const logout = async () => {
     setDriver(null);
     setToken(null);
     await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
-  }
+  };
 
   const value = useMemo(
     () => ({
       driver,
       token,
       isLoading,
-      isAuthenticated: !!driver && !!token,
+      isAuthenticated: !!driver,
       login,
       logout,
     }),
