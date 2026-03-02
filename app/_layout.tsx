@@ -7,7 +7,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { queryClient } from "@/lib/query-client";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { TourneeProvider } from "@/contexts/TourneeContext";
+import { storageService } from "@/services/storage";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -15,13 +15,31 @@ function RootLayoutNav() {
   const { isAuthenticated, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const [onboardingChecked, setOnboardingChecked] = React.useState(false);
 
   useEffect(() => {
-    if (isLoading) return;
+    const checkOnboarding = async () => {
+      const completed = await storageService.isOnboardingCompleted();
+      setOnboardingChecked(true);
+      
+      if (!completed && segments[0] !== "onboarding") {
+        console.log("First time user, redirecting to onboarding...");
+        router.replace("/onboarding");
+      }
+    };
+
+    checkOnboarding();
+  }, [router, segments]);
+
+  useEffect(() => {
+    if (isLoading || !onboardingChecked) return;
 
     const inAuthGroup = segments[0] === "(tabs)" || segments[0] === "parcel";
+    const inOnboarding = segments[0] === "onboarding";
 
     console.log("Navigation check:", { isAuthenticated, inAuthGroup, segments });
+
+    if (inOnboarding) return; // Don't redirect if on onboarding
 
     if (!isAuthenticated && inAuthGroup) {
       // Redirect to login if not authenticated
@@ -32,10 +50,11 @@ function RootLayoutNav() {
       console.log("Redirecting to tabs...");
       router.replace("/(tabs)");
     }
-  }, [isAuthenticated, isLoading, segments, router]);
+  }, [isAuthenticated, isLoading, segments, router, onboardingChecked]);
 
   return (
     <Stack screenOptions={{ headerBackTitle: "Retour" }}>
+      <Stack.Screen name="onboarding" options={{ headerShown: false }} />
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="parcel" options={{ headerShown: false }} />
