@@ -37,10 +37,10 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 22,
   },
   badgeSmall: {
     paddingHorizontal: 8,
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   textSmall: {
     fontSize: 11,

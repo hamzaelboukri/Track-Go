@@ -20,7 +20,7 @@ export function PriorityBadge({ priority }: PriorityBadgeProps) {
 
   return (
     <View style={[styles.badge, { backgroundColor: c.color + "15" }]}>
-      <Ionicons name={c.icon} size={11} color={c.color} />
+      <Ionicons name={c.icon} size={12} color={c.color} />
       <Text style={[styles.text, { color: c.color }]}>{c.label}</Text>
     </View>
   );
@@ -30,15 +30,15 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 3,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 6,
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
   },
   text: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: "700",
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
   },
 });

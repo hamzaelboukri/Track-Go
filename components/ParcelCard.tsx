@@ -69,10 +69,10 @@ export function ParcelCard({ parcel, onPress }: ParcelCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
-    marginHorizontal: 16,
-    marginVertical: 5,
+    marginHorizontal: 18,
+    marginVertical: 6,
     overflow: "hidden",
   },
   header: {
@@ -84,9 +84,9 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   orderBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
+    width: 34,
+    height: 34,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -96,11 +96,11 @@ const styles = StyleSheet.create({
   },
   badges: {
     flexDirection: "row",
-    gap: 6,
+    gap: 8,
   },
   body: {
     paddingHorizontal: 14,
-    gap: 6,
+    gap: 8,
   },
   recipientRow: {
     flexDirection: "row",
@@ -126,8 +126,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 14,
-    paddingVertical: 10,
-    marginTop: 8,
+    paddingVertical: 12,
+    marginTop: 10,
     borderTopWidth: 1,
     gap: 12,
   },
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   footerText: {
-    fontSize: 11,
-    fontWeight: "500",
+    fontSize: 12,
+    fontWeight: "600",
   },
 });
