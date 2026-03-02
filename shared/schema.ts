@@ -60,6 +60,7 @@ export interface Parcel {
   trackingCode: string;
   barcode: string;
   status: ParcelStatusType;
+  driverId?: string; // Driver assigné à ce colis
   recipient: Recipient;
   address: Address;
   weight: number;
