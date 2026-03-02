@@ -7,7 +7,7 @@ interface PriorityBadgeProps {
   priority: "normal" | "express" | "urgent";
 }
 
-export function PriorityBadge({ priority }: PriorityBadgeProps) {
+const PriorityBadgeComponent = ({ priority }: PriorityBadgeProps) => {
   const { colors } = useAppTheme();
 
   const config = {
@@ -24,7 +24,10 @@ export function PriorityBadge({ priority }: PriorityBadgeProps) {
       <Text style={[styles.text, { color: c.color }]}>{c.label}</Text>
     </View>
   );
-}
+};
+
+// Memoize to prevent re-renders when priority hasn't changed
+export const PriorityBadge = React.memo(PriorityBadgeComponent);
 
 const styles = StyleSheet.create({
   badge: {

@@ -16,7 +16,7 @@ interface StatusBadgeProps {
   size?: "small" | "medium";
 }
 
-export function StatusBadge({ status, size = "small" }: StatusBadgeProps) {
+const StatusBadgeComponent = ({ status, size = "small" }: StatusBadgeProps) => {
   const { colors } = useAppTheme();
   const scale = useSharedValue(1);
 
@@ -49,7 +49,10 @@ export function StatusBadge({ status, size = "small" }: StatusBadgeProps) {
       </Text>
     </Animated.View>
   );
-}
+};
+
+// Memoize to prevent re-renders when status and size haven't changed
+export const StatusBadge = React.memo(StatusBadgeComponent);
 
 const styles = StyleSheet.create({
   badge: {

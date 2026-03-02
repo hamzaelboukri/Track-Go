@@ -62,18 +62,60 @@ export default function TourneeScreen() {
     [handleParcelPress]
   );
 
+  // Optimize FlatList header rendering
+  const ListHeader = useMemo(
+    () => (
+      <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <View>
+            <Text style={[styles.greeting, { color: colors.textSecondary }]}>
+              Bonjour
+            </Text>
+            <Text style={[styles.dateText, { color: colors.text }]}>
+              {new Date().toLocaleDateString("fr-FR", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+              }).replace(/^\w/, (c) => c.toUpperCase())}
+            </Text>
+          </View>
+        </View>
+        {stats && <StatsBar stats={stats} />}
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          Colis du jour
+        </Text>
+        <ParcelFilter
+          activeFilter={activeFilter}
+          onFilterChange={setActiveFilter}
+          counts={filterCounts}
+        />
+      </View>
+    ),
+    [colors, stats, activeFilter, filterCounts]
+  );
+
+  // Optimize empty component
+  const ListEmpty = useMemo(
+    () => (
+      <View style={styles.empty}>
+        <Image
+          source={require("@/assets/images/icon.png")}
+          style={styles.emptyImage}
+          contentFit="contain"
+        />
+        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+          Aucun colis pour aujourd&apos;hui
+        </Text>
+      </View>
+    ),
+    [colors.textSecondary]
+  );
+
   const keyExtractor = useCallback((item: Parcel) => item.id, []);
 
   if (isLoading) {
     return <LoadingScreen message="Chargement de la tournee..." />;
   }
-
-  const today = new Date();
-  const dateStr = today.toLocaleDateString("fr-FR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -131,6 +173,12 @@ export default function TourneeScreen() {
         }
         showsVerticalScrollIndicator={false}
         getItemLayout={(_, index) => ({ length: 160, offset: 160 * index, index })}
+        // Performance optimizations
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        updateCellsBatchingPeriod={50}
+        initialNumToRender={10}
+        windowSize={10}
       />
     </View>
   );

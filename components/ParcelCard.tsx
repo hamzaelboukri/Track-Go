@@ -11,7 +11,7 @@ interface ParcelCardProps {
   onPress: () => void;
 }
 
-export function ParcelCard({ parcel, onPress }: ParcelCardProps) {
+const ParcelCardComponent = ({ parcel, onPress }: ParcelCardProps) => {
   const { colors } = useAppTheme();
 
   return (
@@ -65,7 +65,18 @@ export function ParcelCard({ parcel, onPress }: ParcelCardProps) {
       </View>
     </Pressable>
   );
-}
+};
+
+// Memoize ParcelCard to prevent unnecessary re-renders
+export const ParcelCard = React.memo(ParcelCardComponent, (prevProps, nextProps) => {
+  // Only re-render if parcel data or onPress function actually changed
+  return (
+    prevProps.parcel.id === nextProps.parcel.id &&
+    prevProps.parcel.status === nextProps.parcel.status &&
+    prevProps.parcel.priority === nextProps.parcel.priority &&
+    prevProps.onPress === nextProps.onPress
+  );
+});
 
 const styles = StyleSheet.create({
   card: {
