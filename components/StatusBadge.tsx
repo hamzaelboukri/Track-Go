@@ -10,7 +10,7 @@ interface StatusBadgeProps {
   size?: "small" | "medium";
 }
 
-export function StatusBadge({ status, size = "small" }: StatusBadgeProps) {
+const StatusBadgeComponent = ({ status, size = "small" }: StatusBadgeProps) => {
   const { colors } = useAppTheme();
 
   const statusConfig: Record<ParcelStatusType, { color: string; icon: keyof typeof Ionicons.glyphMap }> = {
@@ -31,7 +31,10 @@ export function StatusBadge({ status, size = "small" }: StatusBadgeProps) {
       </Text>
     </View>
   );
-}
+};
+
+// Memoize to prevent re-renders when status and size haven't changed
+export const StatusBadge = React.memo(StatusBadgeComponent);
 
 const styles = StyleSheet.create({
   badge: {
