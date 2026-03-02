@@ -2,6 +2,7 @@ import React, { createContext, useContext, useMemo, ReactNode, useCallback, useE
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiService } from "@/services/api";
 import { storageService } from "@/services/storage";
+import { useAuth } from "./AuthContext";
 
 import type { Tour, TourStats, Parcel, DeliveryProof, IncidentTypeValue, GeoCoordinates } from "../shared/schema";
 
@@ -26,8 +27,8 @@ const TourneeContext = createContext<TourneeContextValue | null>(null);
 
 export function TourneeProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const driverId = 1; // Mock driver ID
-  const token = "mock-token"; // Mock token
+  const { driver, token } = useAuth();
+  const driverId = driver?.id;
   const [isOffline, setIsOffline] = React.useState(false);
 
   // Charger les données depuis le cache au démarrage

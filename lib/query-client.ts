@@ -8,7 +8,7 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 export function getApiUrl(): string {
   const domain = process.env.EXPO_PUBLIC_DOMAIN;
   if (!domain) {
-    return 'http://localhost:3000';
+    return 'http://localhost:5080';
   }
   return domain;
 }
