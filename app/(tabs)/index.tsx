@@ -10,13 +10,14 @@ import { ParcelCard } from "@/components/ParcelCard";
 import { StatsBar } from "@/components/StatsBar";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { ParcelFilter, type FilterType } from "@/components/ParcelFilter";
+import { RealtimeStatusIndicator } from "@/components/RealtimeStatusIndicator";
 import type { Parcel } from "../../shared/schema";
 
 export default function TourneeScreen() {
   const { colors } = useAppTheme();
   const insets = useSafeAreaInsets();
 
-  const { tour, stats, isLoading, isRefreshing, refetch } = useTournee();
+  const { tour, stats, isLoading, isRefreshing, isOffline, lastUpdate, refetch } = useTournee();
 
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
 
@@ -97,6 +98,11 @@ export default function TourneeScreen() {
               </View>
 
             </View>
+            <RealtimeStatusIndicator
+              isOffline={isOffline}
+              isRefreshing={isRefreshing}
+              lastUpdate={lastUpdate}
+            />
             {stats && <StatsBar stats={stats} />}
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
               Colis du jour
