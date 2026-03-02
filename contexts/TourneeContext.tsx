@@ -13,6 +13,7 @@ interface TourneeContextValue {
   isRefreshing: boolean;
   error: Error | null;
   isOffline: boolean;
+  lastUpdate: Date | null;
   refetch: () => void;
   updateParcelStatus: (parcelId: string, status: string) => Promise<Parcel>;
   deliverParcel: (parcelId: string, proof: DeliveryProof) => Promise<Parcel>;
@@ -31,6 +32,7 @@ export function TourneeProvider({ children }: { children: ReactNode }) {
   const { driver, token } = useAuth();
   const driverId = driver?.id;
   const [isOffline, setIsOffline] = React.useState(false);
+  const [lastUpdate, setLastUpdate] = React.useState<Date | null>(null);
 
   // Charger les données depuis le cache au démarrage
   useEffect(() => {
@@ -59,6 +61,7 @@ export function TourneeProvider({ children }: { children: ReactNode }) {
         setIsOffline(false);
         const tour = await apiService.getTour(driverId!, token || undefined);
         await storageService.saveTour(tour); // Cache the new data.
+        setLastUpdate(new Date());
         console.log("--- API FETCH AND CACHE SUCCESSFUL ---");
         return tour;
       } catch (error) {
@@ -163,6 +166,7 @@ export function TourneeProvider({ children }: { children: ReactNode }) {
         isRefreshing: tourQuery.isRefetching || statsQuery.isRefetching,
         error: tourQuery.error || statsQuery.error,
         isOffline,
+        lastUpdate,
         refetch,
         updateParcelStatus: (parcelId: string, status: string) =>
             updateStatusMutation.mutateAsync({ parcelId, status }),
@@ -175,7 +179,7 @@ export function TourneeProvider({ children }: { children: ReactNode }) {
         startTour: () => startTourMutation.mutateAsync(),
         getParcelById,
       }),
-      [tourQuery.data, statsQuery.data, tourQuery.isLoading, statsQuery.isLoading, tourQuery.isRefetching, statsQuery.isRefetching, tourQuery.error, statsQuery.error, isOffline, getParcelById, refetch, updateStatusMutation, deliverMutation, incidentMutation, startTourMutation]
+      [tourQuery.data, statsQuery.data, tourQuery.isLoading, statsQuery.isLoading, tourQuery.isRefetching, statsQuery.isRefetching, tourQuery.error, statsQuery.error, isOffline, lastUpdate, getParcelById, refetch, updateStatusMutation, deliverMutation, incidentMutation, startTourMutation]
   );
 
   return <TourneeContext.Provider value={value}>{children}</TourneeContext.Provider>;
