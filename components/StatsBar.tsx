@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import type { TourStats } from "../shared/schema";
 
@@ -26,7 +27,7 @@ export function StatsBar({ stats }: StatsBarProps) {
         />
       </View>
       <View style={styles.statsRow}>
-        <StatItem icon="cube-outline" label="Total" value={stats.total} color={colors.text} bgColor={colors.surfaceSecondary} />
+        <StatItem icon="logo" label="Total" value={stats.total} color={colors.text} bgColor={colors.surfaceSecondary} />
         <StatItem icon="checkmark-circle" label="Livres" value={stats.delivered} color={colors.success} bgColor={colors.success + "15"} />
         <StatItem icon="time-outline" label="Restants" value={stats.pending + stats.inProgress} color={colors.statusPending} bgColor={colors.statusPending + "15"} />
         <StatItem icon="alert-circle" label="Echecs" value={stats.failed} color={colors.danger} bgColor={colors.danger + "15"} />
@@ -36,7 +37,7 @@ export function StatsBar({ stats }: StatsBarProps) {
 }
 
 function StatItem({ icon, label, value, color, bgColor }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: keyof typeof Ionicons.glyphMap | "logo";
   label: string;
   value: number;
   color: string;
@@ -45,7 +46,15 @@ function StatItem({ icon, label, value, color, bgColor }: {
   const { colors } = useAppTheme();
   return (
     <View style={[styles.statItem, { backgroundColor: bgColor }]}>
-      <Ionicons name={icon} size={16} color={color} />
+      {icon === "logo" ? (
+        <Image
+          source={require("@/assets/images/icon.png")}
+          style={[styles.logoIcon, { tintColor: color }]}
+          contentFit="contain"
+        />
+      ) : (
+        <Ionicons name={icon} size={16} color={color} />
+      )}
       <Text style={[styles.statValue, { color }]}>{value}</Text>
       <Text style={[styles.statLabel, { color: colors.textTertiary }]}>{label}</Text>
     </View>
@@ -92,6 +101,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 10,
     gap: 2,
+  },
+  logoIcon: {
+    width: 16,
+    height: 16,
   },
   statValue: {
     fontSize: 18,
