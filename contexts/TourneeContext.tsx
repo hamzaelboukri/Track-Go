@@ -14,6 +14,7 @@ interface TourneeContextValue {
   error: Error | null;
   isOffline: boolean;
   refetch: () => void;
+  updateParcelStatus: (parcelId: string, status: string) => Promise<Parcel>;
   deliverParcel: (parcelId: string, proof: DeliveryProof) => Promise<Parcel>;
   reportIncident: (
       parcelId: string,
@@ -98,6 +99,17 @@ export function TourneeProvider({ children }: { children: ReactNode }) {
     }
   }, [driverId, queryClient]);
 
+  // KOLI-19: Mutation pour changer le statut d'un colis
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ parcelId, status }: { parcelId: string; status: string }) =>
+        apiService.updateParcelStatus(driverId!, parcelId, status, token || undefined),
+    onSuccess: async (updatedParcel) => {
+      await updateTourCache(updatedParcel);
+      void queryClient.invalidateQueries({ queryKey: ["tour", driverId] });
+      void queryClient.invalidateQueries({ queryKey: ["tour-stats", driverId] });
+    },
+  });
+
   const deliverMutation = useMutation({
     mutationFn: ({ parcelId, proof }: { parcelId: string; proof: DeliveryProof }) =>
         apiService.deliverParcel(driverId!, parcelId, proof, token || undefined),
@@ -152,6 +164,8 @@ export function TourneeProvider({ children }: { children: ReactNode }) {
         error: tourQuery.error || statsQuery.error,
         isOffline,
         refetch,
+        updateParcelStatus: (parcelId: string, status: string) =>
+            updateStatusMutation.mutateAsync({ parcelId, status }),
         deliverParcel: (parcelId: string, proof: DeliveryProof) =>
             deliverMutation.mutateAsync({ parcelId, proof }),
         reportIncident: (
@@ -161,7 +175,7 @@ export function TourneeProvider({ children }: { children: ReactNode }) {
         startTour: () => startTourMutation.mutateAsync(),
         getParcelById,
       }),
-      [tourQuery.data, statsQuery.data, tourQuery.isLoading, statsQuery.isLoading, tourQuery.isRefetching, statsQuery.isRefetching, tourQuery.error, statsQuery.error, isOffline, getParcelById, refetch, deliverMutation, incidentMutation, startTourMutation]
+      [tourQuery.data, statsQuery.data, tourQuery.isLoading, statsQuery.isLoading, tourQuery.isRefetching, statsQuery.isRefetching, tourQuery.error, statsQuery.error, isOffline, getParcelById, refetch, updateStatusMutation, deliverMutation, incidentMutation, startTourMutation]
   );
 
   return <TourneeContext.Provider value={value}>{children}</TourneeContext.Provider>;
