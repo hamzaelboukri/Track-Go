@@ -2,7 +2,7 @@ import React, { createContext, useContext, useMemo, ReactNode, useCallback, useE
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiService } from "@/services/api";
 import { storageService } from "@/services/storage";
-import { useAuth } from "./AuthContext";
+
 import type { Tour, TourStats, Parcel, DeliveryProof, IncidentTypeValue, GeoCoordinates } from "../shared/schema";
 
 interface TourneeContextValue {
@@ -25,9 +25,9 @@ interface TourneeContextValue {
 const TourneeContext = createContext<TourneeContextValue | null>(null);
 
 export function TourneeProvider({ children }: { children: ReactNode }) {
-  const { driver, token } = useAuth();
   const queryClient = useQueryClient();
-  const driverId = driver?.id;
+  const driverId = 1; // Mock driver ID
+  const token = "mock-token"; // Mock token
   const [isOffline, setIsOffline] = React.useState(false);
 
   // Charger les données depuis le cache au démarrage
@@ -52,23 +52,29 @@ export function TourneeProvider({ children }: { children: ReactNode }) {
     queryKey: ["tour", driverId],
     queryFn: async () => {
       try {
+        // KOLI-17: First, try to fetch from the API.
+        console.log("--- ATTEMPTING API FETCH (KOLI-17) ---");
         setIsOffline(false);
         const tour = await apiService.getTour(driverId!, token || undefined);
-        await storageService.saveTour(tour);
+        await storageService.saveTour(tour); // Cache the new data.
+        console.log("--- API FETCH AND CACHE SUCCESSFUL ---");
         return tour;
       } catch (error) {
+        // KOLI-18: If API fails, fall back to cache.
+        console.log("--- API FETCH FAILED, FALLING BACK TO CACHE (KOLI-18) ---");
         setIsOffline(true);
-        // Fallback sur le cache en cas d'erreur réseau
         const cachedTour = await storageService.getTour();
         if (cachedTour && cachedTour.driverId === driverId) {
+          console.log("--- CACHE LOADED SUCCESSFULLY ---");
           return cachedTour;
         }
-        throw error;
+        // If cache is also empty, throw error to be caught by React Query.
+        console.log("--- CACHE IS EMPTY OR INVALID, PROPAGATING ERROR ---");
+        throw new Error("Offline and no cache available.");
       }
     },
     enabled: !!driverId,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: 2,
   });
 
   const statsQuery = useQuery<TourStats>({

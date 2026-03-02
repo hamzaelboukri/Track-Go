@@ -5,7 +5,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { useTournee } from "@/contexts/TourneeContext";
-import { useAuth } from "@/contexts/AuthContext";
+
 import { ParcelCard } from "@/components/ParcelCard";
 import { StatsBar } from "@/components/StatsBar";
 import { LoadingScreen } from "@/components/LoadingScreen";
@@ -14,7 +14,7 @@ import type { Parcel } from "../../shared/schema";
 export default function TourneeScreen() {
   const { colors } = useAppTheme();
   const insets = useSafeAreaInsets();
-  const { driver } = useAuth();
+
   const { tour, stats, isLoading, isRefreshing, refetch } = useTournee();
 
   const webTopInset = Platform.OS === "web" ? 67 : 0;
@@ -58,18 +58,13 @@ export default function TourneeScreen() {
             <View style={styles.headerTop}>
               <View>
                 <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-                  Bonjour, {driver?.firstName}
+                  Bonjour
                 </Text>
                 <Text style={[styles.dateText, { color: colors.text }]}>
                   {dateStr.charAt(0).toUpperCase() + dateStr.slice(1)}
                 </Text>
               </View>
-              <View style={[styles.vehicleBadge, { backgroundColor: colors.primary + "15" }]}>
-                <Ionicons name="car-outline" size={16} color={colors.primary} />
-                <Text style={[styles.vehicleText, { color: colors.primary }]}>
-                  {driver?.vehicleId}
-                </Text>
-              </View>
+
             </View>
             {stats && <StatsBar stats={stats} />}
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -81,7 +76,7 @@ export default function TourneeScreen() {
           <View style={styles.empty}>
             <Ionicons name="cube-outline" size={48} color={colors.textTertiary} />
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              Aucun colis pour aujourd'hui
+              Aucun colis pour aujourd&apos;hui
             </Text>
           </View>
         }

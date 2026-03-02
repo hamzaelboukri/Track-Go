@@ -17,52 +17,22 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [driver, setDriver] = useState<Driver | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadStoredAuth();
-  }, []);
-
-  async function loadStoredAuth() {
-    try {
-      const stored = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as AuthResponse;
-        setDriver(parsed.driver);
-        setToken(parsed.token);
-      }
-    } catch (e) {
-      console.error("Failed to load auth:", e);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function login(input: LoginInput) {
-    const response = await apiService.login(input);
-    setDriver(response.driver);
-    setToken(response.token);
-    await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(response));
-  }
-
-  async function logout() {
-    setDriver(null);
-    setToken(null);
-    await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
-  }
-
   const value = useMemo(
     () => ({
-      driver,
-      token,
-      isLoading,
-      isAuthenticated: !!driver && !!token,
-      login,
-      logout,
+      driver: {
+        id: 1,
+        name: "John Doe",
+        phone: "1234567890",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      token: "mock-token",
+      isLoading: false,
+      isAuthenticated: true,
+      login: async () => {},
+      logout: async () => {},
     }),
-    [driver, token, isLoading]
+    []
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
