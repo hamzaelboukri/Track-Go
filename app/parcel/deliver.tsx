@@ -10,6 +10,10 @@ import { useAppTheme } from "@/hooks/useAppTheme";
 import { useTournee } from "@/contexts/TourneeContext";
 import type { GeoCoordinates } from "../../shared/schema";
 
+function normalizeBarcode(value: string | undefined) {
+  return (value || "").trim().replace(/\s+/g, "").toUpperCase();
+}
+
 export default function DeliverScreen() {
   const { id, barcode } = useLocalSearchParams<{ id: string; barcode: string }>();
   const { colors } = useAppTheme();
@@ -56,7 +60,7 @@ export default function DeliverScreen() {
   }
 
   function handleBarcodeCheck() {
-    const match = scannedCode.trim() === barcode;
+    const match = normalizeBarcode(scannedCode) === normalizeBarcode(barcode);
     setBarcodeMatch(match);
     if (match) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -87,7 +91,7 @@ export default function DeliverScreen() {
 
     setScanLocked(true);
     setScannedCode(code);
-    const match = code === barcode;
+    const match = normalizeBarcode(code) === normalizeBarcode(barcode);
     setBarcodeMatch(match);
 
     if (match) {
@@ -123,7 +127,7 @@ export default function DeliverScreen() {
     setIsSubmitting(true);
     try {
       await deliverParcel(id, {
-        scannedBarcode: scannedCode.trim(),
+        scannedBarcode: normalizeBarcode(scannedCode),
         coordinates: location,
         timestamp: new Date().toISOString(),
       });
@@ -246,7 +250,9 @@ export default function DeliverScreen() {
             {barcodeMatch === false && (
               <View style={[styles.resultRow, { backgroundColor: colors.danger + "15" }]}>
                 <Ionicons name="close-circle" size={18} color={colors.danger} />
-                <Text style={[styles.resultText, { color: colors.danger }]}>Code-barres incorrect</Text>
+                <Text style={[styles.resultText, { color: colors.danger }]}>
+                  Code-barres incorrect ({normalizeBarcode(scannedCode)} / attendu {normalizeBarcode(barcode)})
+                </Text>
               </View>
             )}
           </View>
