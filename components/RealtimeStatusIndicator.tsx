@@ -16,7 +16,7 @@ import { useAppTheme } from "@/hooks/useAppTheme";
 interface RealtimeStatusIndicatorProps {
   isOffline: boolean;
   isRefreshing: boolean;
-  lastUpdate?: Date;
+  lastUpdate: Date | null;
 }
 
 export function RealtimeStatusIndicator({

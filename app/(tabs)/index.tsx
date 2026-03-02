@@ -80,6 +80,11 @@ export default function TourneeScreen() {
             </Text>
           </View>
         </View>
+        <RealtimeStatusIndicator
+          isOffline={isOffline}
+          isRefreshing={isRefreshing}
+          lastUpdate={lastUpdate}
+        />
         {stats && <StatsBar stats={stats} />}
         <Text style={[styles.sectionTitle, { color: colors.text }]}>
           Colis du jour
@@ -91,7 +96,7 @@ export default function TourneeScreen() {
         />
       </View>
     ),
-    [colors, stats, activeFilter, filterCounts]
+    [colors, stats, isOffline, isRefreshing, lastUpdate, activeFilter, filterCounts]
   );
 
   // Optimize empty component
@@ -127,47 +132,8 @@ export default function TourneeScreen() {
           paddingTop: insets.top + webTopInset + 8,
           paddingBottom: 100,
         }}
-        ListHeaderComponent={
-          <View style={styles.header}>
-            <View style={styles.headerTop}>
-              <View>
-                <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-                  Bonjour
-                </Text>
-                <Text style={[styles.dateText, { color: colors.text }]}>
-                  {dateStr.charAt(0).toUpperCase() + dateStr.slice(1)}
-                </Text>
-              </View>
-
-            </View>
-            <RealtimeStatusIndicator
-              isOffline={isOffline}
-              isRefreshing={isRefreshing}
-              lastUpdate={lastUpdate}
-            />
-            {stats && <StatsBar stats={stats} />}
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Colis du jour
-            </Text>
-            <ParcelFilter
-              activeFilter={activeFilter}
-              onFilterChange={setActiveFilter}
-              counts={filterCounts}
-            />
-          </View>
-        }
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Image
-              source={require("@/assets/images/icon.png")}
-              style={styles.emptyImage}
-              contentFit="contain"
-            />
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              Aucun colis pour aujourd&apos;hui
-            </Text>
-          </View>
-        }
+        ListHeaderComponent={ListHeader}
+        ListEmptyComponent={ListEmpty}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={refetch} tintColor={colors.primary} />
         }
