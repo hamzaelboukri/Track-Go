@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState, useMemo } from "react";
 import { View, Text, FlatList, StyleSheet, RefreshControl, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -10,6 +10,7 @@ import { useTournee } from "@/contexts/TourneeContext";
 import { ParcelCard } from "@/components/ParcelCard";
 import { StatsBar } from "@/components/StatsBar";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { ParcelFilter, type FilterType } from "@/components/ParcelFilter";
 import type { Parcel } from "../../shared/schema";
 
 export default function TourneeScreen() {
@@ -18,7 +19,37 @@ export default function TourneeScreen() {
 
   const { tour, stats, isLoading, isRefreshing, refetch } = useTournee();
 
+  const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+
   const webTopInset = Platform.OS === "web" ? 67 : 0;
+
+  // Filtrer les colis selon le filtre actif
+  const filteredParcels = useMemo(() => {
+    const parcels = tour?.parcels || [];
+    
+    switch (activeFilter) {
+      case "delivered":
+        return parcels.filter((p) => p.status === "delivered");
+      case "pending":
+        return parcels.filter((p) => p.status === "pending");
+      case "failed":
+        return parcels.filter((p) => p.status === "failed");
+      case "all":
+      default:
+        return parcels;
+    }
+  }, [tour?.parcels, activeFilter]);
+
+  // Calculer les compteurs pour chaque filtre
+  const filterCounts = useMemo(() => {
+    const parcels = tour?.parcels || [];
+    return {
+      all: parcels.length,
+      delivered: parcels.filter((p) => p.status === "delivered").length,
+      pending: parcels.filter((p) => p.status === "pending").length,
+      failed: parcels.filter((p) => p.status === "failed").length,
+    };
+  }, [tour?.parcels]);
 
   const handleParcelPress = useCallback((parcel: Parcel) => {
     router.push({ pathname: "/parcel/[id]", params: { id: parcel.id } });
@@ -47,7 +78,7 @@ export default function TourneeScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <FlatList
-        data={tour?.parcels || []}
+        data={filteredParcels}
         renderItem={renderParcel}
         keyExtractor={keyExtractor}
         contentContainerStyle={{
@@ -71,6 +102,11 @@ export default function TourneeScreen() {
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
               Colis du jour
             </Text>
+            <ParcelFilter
+              activeFilter={activeFilter}
+              onFilterChange={setActiveFilter}
+              counts={filterCounts}
+            />
           </View>
         }
         ListEmptyComponent={
