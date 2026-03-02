@@ -1,9 +1,10 @@
-import React, { useState, useRef } from "react";
-import { View, Text, StyleSheet, Pressable, Platform, TextInput, Alert } from "react-native";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { View, Text, StyleSheet, Pressable, Platform, TextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
+import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "expo-camera";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { useTournee } from "@/contexts/TourneeContext";
 
@@ -14,6 +15,10 @@ export default function ScanScreen() {
   const [manualCode, setManualCode] = useState("");
   const [scanResult, setScanResult] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [torchEnabled, setTorchEnabled] = useState(false);
+  const [scanLocked, setScanLocked] = useState(false);
+  const [permission, requestPermission] = useCameraPermissions();
+  const unlockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const webTopInset = Platform.OS === "web" ? 67 : 0;
 
   function findParcelByBarcode(barcode: string) {
@@ -41,6 +46,50 @@ export default function ScanScreen() {
     }
   }
 
+  const unlockScanner = useCallback((delay = 1200) => {
+    if (unlockTimeoutRef.current) {
+      clearTimeout(unlockTimeoutRef.current);
+    }
+    unlockTimeoutRef.current = setTimeout(() => {
+      setScanLocked(false);
+    }, delay);
+  }, []);
+
+  function processCode(code: string) {
+    const normalized = code.trim();
+    if (!normalized) return;
+
+    setScanResult(normalized);
+    setManualCode(normalized);
+    setError("");
+    setScanLocked(true);
+
+    const parcel = findParcelByBarcode(normalized);
+    if (parcel) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.push({ pathname: "/parcel/[id]", params: { id: parcel.id } });
+      unlockScanner(1600);
+      return;
+    }
+
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    setError("Code-barres non reconnu dans la tournee");
+    unlockScanner();
+  }
+
+  function handleBarcodeScanned(result: BarcodeScanningResult) {
+    if (scanLocked) return;
+    processCode(result.data);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (unlockTimeoutRef.current) {
+        clearTimeout(unlockTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const pendingCount = tour?.parcels.filter(
     (p) => p.status === "pending" || p.status === "in_progress"
   ).length || 0;
@@ -56,15 +105,102 @@ export default function ScanScreen() {
 
       <View style={styles.content}>
         <View style={[styles.scanArea, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <View style={[styles.scanIconContainer, { backgroundColor: colors.primary + "10" }]}>
-            <Ionicons name="scan" size={64} color={colors.primary} />
-          </View>
-          <Text style={[styles.scanHint, { color: colors.textSecondary }]}>
-            Utilisez la camera de votre appareil pour scanner le code-barres du colis
-          </Text>
+          {Platform.OS === "web" ? (
+            <>
+              <View style={[styles.scanIconContainer, { backgroundColor: colors.primary + "10" }]}>
+                <Ionicons name="scan" size={64} color={colors.primary} />
+              </View>
+              <Text style={[styles.scanHint, { color: colors.textSecondary }]}>
+                Le scan camera n'est pas disponible sur web. Utilisez un appareil mobile.
+              </Text>
+            </>
+          ) : !permission?.granted ? (
+            <>
+              <View style={[styles.scanIconContainer, { backgroundColor: colors.primary + "10" }]}>
+                <Ionicons name="camera-outline" size={64} color={colors.primary} />
+              </View>
+              <Text style={[styles.scanHint, { color: colors.textSecondary }]}>
+                Autorisez l'acces camera pour scanner les codes-barres 1D/2D.
+              </Text>
+              <Pressable
+                onPress={requestPermission}
+                style={({ pressed }) => [
+                  styles.permissionButton,
+                  { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+                ]}
+              >
+                <Ionicons name="key-outline" size={16} color="#fff" />
+                <Text style={styles.permissionButtonText}>Autoriser la camera</Text>
+              </Pressable>
+            </>
+          ) : (
+            <>
+              <View style={styles.cameraWrap}>
+                <CameraView
+                  style={styles.camera}
+                  facing="back"
+                  enableTorch={torchEnabled}
+                  barcodeScannerSettings={{
+                    barcodeTypes: [
+                      "ean13",
+                      "ean8",
+                      "upc_a",
+                      "upc_e",
+                      "code128",
+                      "code39",
+                      "code93",
+                      "codabar",
+                      "itf14",
+                      "qr",
+                      "pdf417",
+                      "aztec",
+                      "datamatrix",
+                    ],
+                  }}
+                  onBarcodeScanned={handleBarcodeScanned}
+                />
+                <View style={[styles.cameraOverlay, { borderColor: colors.primary }]} />
+              </View>
+
+              <View style={styles.cameraActions}>
+                <Pressable
+                  onPress={() => setTorchEnabled((value) => !value)}
+                  style={({ pressed }) => [
+                    styles.cameraButton,
+                    { backgroundColor: colors.surfaceSecondary, opacity: pressed ? 0.8 : 1 },
+                  ]}
+                >
+                  <Ionicons name={torchEnabled ? "flash" : "flash-off"} size={16} color={colors.text} />
+                  <Text style={[styles.cameraButtonText, { color: colors.text }]}>
+                    {torchEnabled ? "Lampe ON" : "Lampe OFF"}
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => setScanLocked(false)}
+                  style={({ pressed }) => [
+                    styles.cameraButton,
+                    { backgroundColor: colors.surfaceSecondary, opacity: pressed ? 0.8 : 1 },
+                  ]}
+                >
+                  <Ionicons name="refresh" size={16} color={colors.text} />
+                  <Text style={[styles.cameraButtonText, { color: colors.text }]}>Rescanner</Text>
+                </Pressable>
+              </View>
+
+              <Text style={[styles.scanHint, { color: colors.textSecondary }]}>
+                Alignez le code-barres dans le cadre puis maintenez l'appareil stable.
+              </Text>
+            </>
+          )}
           <Text style={[styles.scanNote, { color: colors.textTertiary }]}>
-            Le scan camera est disponible sur appareil physique via Expo Go
+            Le scan camera fonctionne sur appareil physique via Expo Go.
           </Text>
+          {!!scanResult && (
+            <Text style={[styles.scanResult, { color: colors.textSecondary }]}>
+              Dernier scan: {scanResult}
+            </Text>
+          )}
         </View>
 
         <View style={styles.divider}>
@@ -163,6 +299,44 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
     gap: 12,
   },
+  cameraWrap: {
+    width: "100%",
+    height: 210,
+    borderRadius: 12,
+    overflow: "hidden",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  camera: {
+    width: "100%",
+    height: "100%",
+  },
+  cameraOverlay: {
+    position: "absolute",
+    width: "72%",
+    height: "48%",
+    borderWidth: 2,
+    borderRadius: 14,
+    backgroundColor: "transparent",
+  },
+  cameraActions: {
+    width: "100%",
+    flexDirection: "row",
+    gap: 10,
+  },
+  cameraButton: {
+    flex: 1,
+    height: 38,
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  cameraButtonText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
   scanIconContainer: {
     width: 100,
     height: 100,
@@ -178,6 +352,24 @@ const styles = StyleSheet.create({
   scanNote: {
     fontSize: 11,
     textAlign: "center",
+  },
+  scanResult: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  permissionButton: {
+    minHeight: 40,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  permissionButtonText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "700",
   },
   divider: {
     flexDirection: "row",

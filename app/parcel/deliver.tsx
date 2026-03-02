@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Pressable, ActivityIndicator, Platform, TextInput, Alert } from "react-native";
 import { useLocalSearchParams, router, Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import * as Haptics from "expo-haptics";
+import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "expo-camera";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { useTournee } from "@/contexts/TourneeContext";
 import type { GeoCoordinates } from "../../shared/schema";
@@ -22,6 +23,11 @@ export default function DeliverScreen() {
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [barcodeMatch, setBarcodeMatch] = useState<boolean | null>(null);
+  const [showScanner, setShowScanner] = useState(false);
+  const [torchEnabled, setTorchEnabled] = useState(false);
+  const [scanLocked, setScanLocked] = useState(false);
+  const [permission, requestPermission] = useCameraPermissions();
+  const unlockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     requestLocation();
@@ -58,6 +64,52 @@ export default function DeliverScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   }
+
+  async function handleOpenScanner() {
+    if (Platform.OS === "web") {
+      Alert.alert("Non disponible", "Le scanner camera est disponible sur mobile uniquement.");
+      return;
+    }
+    if (!permission?.granted) {
+      const result = await requestPermission();
+      if (!result.granted) {
+        Alert.alert("Permission requise", "Autorisez la camera pour scanner le code-barres.");
+        return;
+      }
+    }
+    setShowScanner(true);
+  }
+
+  function handleBarcodeScanned(result: BarcodeScanningResult) {
+    if (scanLocked) return;
+    const code = result.data?.trim();
+    if (!code) return;
+
+    setScanLocked(true);
+    setScannedCode(code);
+    const match = code === barcode;
+    setBarcodeMatch(match);
+
+    if (match) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setShowScanner(false);
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+
+    if (unlockTimeoutRef.current) {
+      clearTimeout(unlockTimeoutRef.current);
+    }
+    unlockTimeoutRef.current = setTimeout(() => setScanLocked(false), 1200);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (unlockTimeoutRef.current) {
+        clearTimeout(unlockTimeoutRef.current);
+      }
+    };
+  }, []);
 
   async function handleConfirm() {
     if (!barcodeMatch) {
@@ -121,6 +173,70 @@ export default function DeliverScreen() {
                 <Ionicons name="checkmark" size={18} color="#fff" />
               </Pressable>
             </View>
+            <View style={styles.scannerActions}>
+              <Pressable
+                onPress={handleOpenScanner}
+                style={({ pressed }) => [
+                  styles.scannerActionButton,
+                  { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+                ]}
+              >
+                <Ionicons name="camera-outline" size={18} color="#fff" />
+                <Text style={styles.scannerActionText}>Scanner avec la camera</Text>
+              </Pressable>
+            </View>
+            {showScanner && permission?.granted && (
+              <View style={styles.scannerWrap}>
+                <CameraView
+                  style={styles.scannerCamera}
+                  facing="back"
+                  enableTorch={torchEnabled}
+                  barcodeScannerSettings={{
+                    barcodeTypes: [
+                      "ean13",
+                      "ean8",
+                      "upc_a",
+                      "upc_e",
+                      "code128",
+                      "code39",
+                      "code93",
+                      "codabar",
+                      "itf14",
+                      "qr",
+                      "pdf417",
+                      "aztec",
+                      "datamatrix",
+                    ],
+                  }}
+                  onBarcodeScanned={handleBarcodeScanned}
+                />
+                <View style={[styles.scannerOverlay, { borderColor: colors.primary }]} />
+                <View style={styles.scannerFooter}>
+                  <Pressable
+                    onPress={() => setTorchEnabled((value) => !value)}
+                    style={({ pressed }) => [
+                      styles.scannerFooterButton,
+                      { backgroundColor: colors.surfaceSecondary, opacity: pressed ? 0.85 : 1 },
+                    ]}
+                  >
+                    <Ionicons name={torchEnabled ? "flash" : "flash-off"} size={16} color={colors.text} />
+                    <Text style={[styles.scannerFooterText, { color: colors.text }]}>
+                      {torchEnabled ? "Lampe ON" : "Lampe OFF"}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setShowScanner(false)}
+                    style={({ pressed }) => [
+                      styles.scannerFooterButton,
+                      { backgroundColor: colors.surfaceSecondary, opacity: pressed ? 0.85 : 1 },
+                    ]}
+                  >
+                    <Ionicons name="close" size={16} color={colors.text} />
+                    <Text style={[styles.scannerFooterText, { color: colors.text }]}>Fermer</Text>
+                  </Pressable>
+                </View>
+              </View>
+            )}
             {barcodeMatch === true && (
               <View style={[styles.resultRow, { backgroundColor: colors.success + "15" }]}>
                 <Ionicons name="checkmark-circle" size={18} color={colors.success} />
@@ -256,6 +372,64 @@ const styles = StyleSheet.create({
     height: "100%",
     justifyContent: "center",
     alignItems: "center",
+  },
+  scannerActions: {
+    marginTop: 2,
+  },
+  scannerActionButton: {
+    height: 40,
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  scannerActionText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  scannerWrap: {
+    marginTop: 10,
+    width: "100%",
+    height: 220,
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  scannerCamera: {
+    width: "100%",
+    height: "100%",
+  },
+  scannerOverlay: {
+    position: "absolute",
+    left: "14%",
+    top: "26%",
+    width: "72%",
+    height: "44%",
+    borderWidth: 2,
+    borderRadius: 14,
+    backgroundColor: "transparent",
+  },
+  scannerFooter: {
+    position: "absolute",
+    left: 10,
+    right: 10,
+    bottom: 10,
+    flexDirection: "row",
+    gap: 8,
+  },
+  scannerFooterButton: {
+    flex: 1,
+    height: 34,
+    borderRadius: 9,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  scannerFooterText: {
+    fontSize: 12,
+    fontWeight: "600",
   },
   resultRow: {
     flexDirection: "row",
