@@ -251,7 +251,7 @@ export default function DeliverScreen() {
               <View style={[styles.resultRow, { backgroundColor: colors.danger + "15" }]}>
                 <Ionicons name="close-circle" size={18} color={colors.danger} />
                 <Text style={[styles.resultText, { color: colors.danger }]}>
-                  Code-barres incorrect ({normalizeBarcode(scannedCode)} / attendu {normalizeBarcode(barcode)})
+                  Scan invalide: {normalizeBarcode(scannedCode)} (attendu: {normalizeBarcode(barcode)})
                 </Text>
               </View>
             )}

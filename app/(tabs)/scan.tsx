@@ -42,7 +42,7 @@ export default function ScanScreen() {
       router.push({ pathname: "/parcel/[id]", params: { id: parcel.id } });
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setError("Code-barres non reconnu dans la tournee");
+      setError(`Scan invalide: "${code}" non reconnu dans la tournee`);
     }
   }
 
@@ -73,7 +73,7 @@ export default function ScanScreen() {
     }
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    setError("Code-barres non reconnu dans la tournee");
+      setError(`Scan invalide: "${code}" non reconnu dans la tournee`);
     unlockScanner();
   }
 
