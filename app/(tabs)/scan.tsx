@@ -187,6 +187,23 @@ export default function ScanScreen() {
                   <Text style={[styles.cameraButtonText, { color: colors.text }]}>Rescanner</Text>
                 </Pressable>
               </View>
+              {!torchEnabled && (
+                <View style={[styles.lowLightBanner, { backgroundColor: colors.warning + "18" }]}>
+                  <Ionicons name="moon-outline" size={16} color={colors.warning} />
+                  <Text style={[styles.lowLightText, { color: colors.warning }]}>
+                    Faible luminosite detectee ? Activez la lampe pour stabiliser le scan.
+                  </Text>
+                  <Pressable
+                    onPress={() => setTorchEnabled(true)}
+                    style={({ pressed }) => [
+                      styles.lowLightButton,
+                      { backgroundColor: colors.warning, opacity: pressed ? 0.85 : 1 },
+                    ]}
+                  >
+                    <Text style={styles.lowLightButtonText}>Activer</Text>
+                  </Pressable>
+                </View>
+              )}
 
               <Text style={[styles.scanHint, { color: colors.textSecondary }]}>
                 Alignez le code-barres dans le cadre puis maintenez l'appareil stable.
@@ -336,6 +353,31 @@ const styles = StyleSheet.create({
   cameraButtonText: {
     fontSize: 12,
     fontWeight: "600",
+  },
+  lowLightBanner: {
+    width: "100%",
+    minHeight: 42,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  lowLightText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  lowLightButton: {
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  lowLightButtonText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "700",
   },
   scanIconContainer: {
     width: 100,

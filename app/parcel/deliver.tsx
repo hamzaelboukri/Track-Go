@@ -190,56 +190,75 @@ export default function DeliverScreen() {
               </Pressable>
             </View>
             {showScanner && permission?.granted && (
-              <View style={styles.scannerWrap}>
-                <CameraView
-                  style={styles.scannerCamera}
-                  facing="back"
-                  enableTorch={torchEnabled}
-                  barcodeScannerSettings={{
-                    barcodeTypes: [
-                      "ean13",
-                      "ean8",
-                      "upc_a",
-                      "upc_e",
-                      "code128",
-                      "code39",
-                      "code93",
-                      "codabar",
-                      "itf14",
-                      "qr",
-                      "pdf417",
-                      "aztec",
-                      "datamatrix",
-                    ],
-                  }}
-                  onBarcodeScanned={handleBarcodeScanned}
-                />
-                <View style={[styles.scannerOverlay, { borderColor: colors.primary }]} />
-                <View style={styles.scannerFooter}>
-                  <Pressable
-                    onPress={() => setTorchEnabled((value) => !value)}
-                    style={({ pressed }) => [
-                      styles.scannerFooterButton,
-                      { backgroundColor: colors.surfaceSecondary, opacity: pressed ? 0.85 : 1 },
-                    ]}
-                  >
-                    <Ionicons name={torchEnabled ? "flash" : "flash-off"} size={16} color={colors.text} />
-                    <Text style={[styles.scannerFooterText, { color: colors.text }]}>
-                      {torchEnabled ? "Lampe ON" : "Lampe OFF"}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => setShowScanner(false)}
-                    style={({ pressed }) => [
-                      styles.scannerFooterButton,
-                      { backgroundColor: colors.surfaceSecondary, opacity: pressed ? 0.85 : 1 },
-                    ]}
-                  >
-                    <Ionicons name="close" size={16} color={colors.text} />
-                    <Text style={[styles.scannerFooterText, { color: colors.text }]}>Fermer</Text>
-                  </Pressable>
+              <>
+                <View style={styles.scannerWrap}>
+                  <CameraView
+                    style={styles.scannerCamera}
+                    facing="back"
+                    enableTorch={torchEnabled}
+                    barcodeScannerSettings={{
+                      barcodeTypes: [
+                        "ean13",
+                        "ean8",
+                        "upc_a",
+                        "upc_e",
+                        "code128",
+                        "code39",
+                        "code93",
+                        "codabar",
+                        "itf14",
+                        "qr",
+                        "pdf417",
+                        "aztec",
+                        "datamatrix",
+                      ],
+                    }}
+                    onBarcodeScanned={handleBarcodeScanned}
+                  />
+                  <View style={[styles.scannerOverlay, { borderColor: colors.primary }]} />
+                  <View style={styles.scannerFooter}>
+                    <Pressable
+                      onPress={() => setTorchEnabled((value) => !value)}
+                      style={({ pressed }) => [
+                        styles.scannerFooterButton,
+                        { backgroundColor: colors.surfaceSecondary, opacity: pressed ? 0.85 : 1 },
+                      ]}
+                    >
+                      <Ionicons name={torchEnabled ? "flash" : "flash-off"} size={16} color={colors.text} />
+                      <Text style={[styles.scannerFooterText, { color: colors.text }]}>
+                        {torchEnabled ? "Lampe ON" : "Lampe OFF"}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => setShowScanner(false)}
+                      style={({ pressed }) => [
+                        styles.scannerFooterButton,
+                        { backgroundColor: colors.surfaceSecondary, opacity: pressed ? 0.85 : 1 },
+                      ]}
+                    >
+                      <Ionicons name="close" size={16} color={colors.text} />
+                      <Text style={[styles.scannerFooterText, { color: colors.text }]}>Fermer</Text>
+                    </Pressable>
+                  </View>
                 </View>
-              </View>
+                {!torchEnabled && (
+                  <View style={[styles.lowLightBanner, { backgroundColor: colors.warning + "18" }]}>
+                    <Ionicons name="moon-outline" size={16} color={colors.warning} />
+                    <Text style={[styles.lowLightText, { color: colors.warning }]}>
+                      Faible luminosite ? Activez la lampe pour ameliorer la lecture.
+                    </Text>
+                    <Pressable
+                      onPress={() => setTorchEnabled(true)}
+                      style={({ pressed }) => [
+                        styles.lowLightButton,
+                        { backgroundColor: colors.warning, opacity: pressed ? 0.85 : 1 },
+                      ]}
+                    >
+                      <Text style={styles.lowLightButtonText}>Activer</Text>
+                    </Pressable>
+                  </View>
+                )}
+              </>
             )}
             {barcodeMatch === true && (
               <View style={[styles.resultRow, { backgroundColor: colors.success + "15" }]}>
@@ -436,6 +455,31 @@ const styles = StyleSheet.create({
   scannerFooterText: {
     fontSize: 12,
     fontWeight: "600",
+  },
+  lowLightBanner: {
+    marginTop: 8,
+    minHeight: 42,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  lowLightText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  lowLightButton: {
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  lowLightButtonText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "700",
   },
   resultRow: {
     flexDirection: "row",
