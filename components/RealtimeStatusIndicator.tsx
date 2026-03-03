@@ -13,13 +13,13 @@ import Animated, {
 } from "react-native-reanimated";
 import { useAppTheme } from "@/hooks/useAppTheme";
 
-interface RealtimeStatusIndicatorProps {
+export interface RealtimeStatusIndicatorProps {
   isOffline: boolean;
   isRefreshing: boolean;
   lastUpdate: Date | null;
 }
 
-export function RealtimeStatusIndicator({
+export function RealtimeStatusIndicatorBase({
   isOffline,
   isRefreshing,
   lastUpdate,
@@ -117,6 +117,8 @@ export function RealtimeStatusIndicator({
     </Animated.View>
   );
 }
+
+export const RealtimeStatusIndicator = React.memo(RealtimeStatusIndicatorBase);
 
 const styles = StyleSheet.create({
   container: {

@@ -9,7 +9,7 @@ interface StatsBarProps {
   stats: TourStats;
 }
 
-export function StatsBar({ stats }: StatsBarProps) {
+function StatsBarComponent({ stats }: StatsBarProps) {
   const { colors } = useAppTheme();
 
   return (
@@ -35,6 +35,19 @@ export function StatsBar({ stats }: StatsBarProps) {
     </View>
   );
 }
+
+export const StatsBar = React.memo(StatsBarComponent, (prev, next) => {
+  const a = prev.stats;
+  const b = next.stats;
+  return (
+    a.total === b.total &&
+    a.delivered === b.delivered &&
+    a.failed === b.failed &&
+    a.pending === b.pending &&
+    a.inProgress === b.inProgress &&
+    a.progressPercent === b.progressPercent
+  );
+});
 
 function StatItem({ icon, label, value, color, bgColor }: {
   icon: keyof typeof Ionicons.glyphMap | "logo";
