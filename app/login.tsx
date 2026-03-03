@@ -17,6 +17,7 @@ import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAppTheme } from "@/hooks/useAppTheme";
+import { typography } from "@/constants/typography";
 
 export default function LoginScreen() {
   const { colors } = useAppTheme();
@@ -172,12 +173,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   appName: {
-    fontSize: 32,
-    fontWeight: "800",
+    fontSize: typography.size["3xl"],
+    fontWeight: typography.weight.extrabold,
     letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: typography.size.sm,
     textAlign: "center",
   },
   form: {
@@ -192,16 +193,16 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   errorText: {
-    fontSize: 13,
-    fontWeight: "500",
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.medium,
     flex: 1,
   },
   inputGroup: {
     gap: 6,
   },
   inputLabel: {
-    fontSize: 13,
-    fontWeight: "600",
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.semibold,
     marginLeft: 4,
   },
   inputWrapper: {
@@ -215,7 +216,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    fontSize: typography.size.md,
     height: "100%",
   },
   loginButton: {
@@ -229,12 +230,12 @@ const styles = StyleSheet.create({
   },
   loginButtonText: {
     color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.bold,
   },
   hint: {
     textAlign: "center",
-    fontSize: 12,
+    fontSize: typography.size.xs,
     marginTop: 4,
   },
 });

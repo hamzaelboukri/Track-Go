@@ -6,6 +6,7 @@ import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "expo-camera";
 import { useAppTheme } from "@/hooks/useAppTheme";
+import { typography } from "@/constants/typography";
 import { useTournee } from "@/contexts/TourneeContext";
 
 export default function ScanScreen() {
@@ -296,12 +297,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   title: {
-    fontSize: 22,
-    fontWeight: "800",
+    fontSize: typography.size.xl,
+    fontWeight: typography.weight.extrabold,
   },
   subtitle: {
-    fontSize: 13,
-    fontWeight: "500",
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.medium,
   },
   content: {
     flex: 1,
@@ -351,8 +352,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   cameraButtonText: {
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.semibold,
   },
   lowLightBanner: {
     width: "100%",
@@ -366,8 +367,8 @@ const styles = StyleSheet.create({
   },
   lowLightText: {
     flex: 1,
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.semibold,
   },
   lowLightButton: {
     borderRadius: 8,
@@ -376,8 +377,8 @@ const styles = StyleSheet.create({
   },
   lowLightButtonText: {
     color: "#fff",
-    fontSize: 11,
-    fontWeight: "700",
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.bold,
   },
   scanIconContainer: {
     width: 100,
@@ -387,17 +388,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   scanHint: {
-    fontSize: 14,
+    fontSize: typography.size.base,
     textAlign: "center",
     lineHeight: 20,
   },
   scanNote: {
-    fontSize: 11,
+    fontSize: typography.size.xs,
     textAlign: "center",
   },
   scanResult: {
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.semibold,
   },
   permissionButton: {
     minHeight: 40,
@@ -410,8 +411,8 @@ const styles = StyleSheet.create({
   },
   permissionButtonText: {
     color: "#fff",
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.bold,
   },
   divider: {
     flexDirection: "row",
@@ -423,15 +424,15 @@ const styles = StyleSheet.create({
     height: 1,
   },
   dividerText: {
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.semibold,
   },
   manualEntry: {
     gap: 8,
   },
   manualLabel: {
-    fontSize: 13,
-    fontWeight: "600",
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.semibold,
     marginLeft: 4,
   },
   inputRow: {
@@ -446,7 +447,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 15,
+    fontSize: typography.size.base,
     height: "100%",
   },
   submitButton: {
@@ -464,8 +465,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   errorText: {
-    fontSize: 12,
-    fontWeight: "500",
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.medium,
   },
   recentSection: {
     borderRadius: 14,
@@ -474,8 +475,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   recentTitle: {
-    fontSize: 14,
-    fontWeight: "700",
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.bold,
   },
   recentItem: {
     flexDirection: "row",
@@ -490,11 +491,11 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   recentCode: {
-    fontSize: 13,
+    fontSize: typography.size.sm,
     fontWeight: "600",
     fontFamily: Platform.select({ ios: "Menlo", default: "monospace" }),
   },
   recentName: {
-    fontSize: 11,
+    fontSize: typography.size.xs,
   },
 });
