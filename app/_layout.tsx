@@ -2,12 +2,17 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
+import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { StatusBar } from "expo-status-bar";
+import * as SystemUI from "expo-system-ui";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
+import { useColorScheme } from "react-native";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { queryClient } from "@/lib/query-client";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { storageService } from "@/services/storage";
+import Colors from "@/constants/colors";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -63,6 +68,26 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const appColors = isDark ? Colors.dark : Colors.light;
+
+  const navigationTheme = React.useMemo(() => {
+    const base = isDark ? DarkTheme : DefaultTheme;
+    return {
+      ...base,
+      colors: {
+        ...base.colors,
+        primary: appColors.primary,
+        background: appColors.background,
+        card: appColors.surface,
+        text: appColors.text,
+        border: appColors.border,
+        notification: appColors.accent,
+      },
+    };
+  }, [isDark, appColors]);
+
   useEffect(() => {
     console.log("RootLayout mounted");
     const timer = setTimeout(() => {
@@ -72,17 +97,24 @@ export default function RootLayout() {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    SystemUI.setBackgroundColorAsync(appColors.background).catch(() => {});
+  }, [appColors.background]);
+
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <KeyboardProvider>
-            <AuthProvider>
-              <RootLayoutNav />
-            </AuthProvider>
-          </KeyboardProvider>
-        </GestureHandlerRootView>
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <ThemeProvider value={navigationTheme}>
+      <StatusBar style={isDark ? "light" : "dark"} />
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <KeyboardProvider>
+              <AuthProvider>
+                <RootLayoutNav />
+              </AuthProvider>
+            </KeyboardProvider>
+          </GestureHandlerRootView>
+        </QueryClientProvider>
+      </ErrorBoundary>
+    </ThemeProvider>
   );
 }
