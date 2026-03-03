@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Image } from "expo-image";
 import { useAppTheme } from "@/hooks/useAppTheme";
+import { typography } from "@/constants/typography";
 import { useTournee } from "@/contexts/TourneeContext";
 
 import { ParcelCard } from "@/components/ParcelCard";
@@ -165,12 +166,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   greeting: {
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.medium,
   },
   dateText: {
-    fontSize: 22,
-    fontWeight: "800",
+    fontSize: typography.size.xl,
+    fontWeight: typography.weight.extrabold,
     letterSpacing: -0.3,
   },
   vehicleBadge: {
@@ -182,12 +183,12 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   vehicleText: {
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.bold,
   },
   sectionTitle: {
-    fontSize: 17,
-    fontWeight: "700",
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.bold,
     paddingHorizontal: 16,
   },
   empty: {
@@ -202,7 +203,7 @@ const styles = StyleSheet.create({
     opacity: 0.3,
   },
   emptyText: {
-    fontSize: 15,
-    fontWeight: "500",
+    fontSize: typography.size.base,
+    fontWeight: typography.weight.medium,
   },
 });

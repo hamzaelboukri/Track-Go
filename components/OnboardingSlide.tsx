@@ -5,6 +5,7 @@ import Animated, {
   FadeIn,
   ZoomIn,
 } from "react-native-reanimated";
+import { typography } from "@/constants/typography";
 
 const { width } = Dimensions.get("window");
 
@@ -70,16 +71,16 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   title: {
-    fontSize: 28,
-    fontWeight: "700",
+    fontSize: typography.size["2xl"],
+    fontWeight: typography.weight.extrabold,
     textAlign: "center",
     letterSpacing: -0.3,
   },
   description: {
-    fontSize: 16,
-    fontWeight: "400",
+    fontSize: typography.size.base,
+    fontWeight: typography.weight.regular,
     textAlign: "center",
-    lineHeight: 24,
+    lineHeight: typography.size.base * typography.lineHeight.relaxed,
     maxWidth: 280,
     opacity: 0.75,
   },
