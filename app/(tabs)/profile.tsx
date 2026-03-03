@@ -49,7 +49,7 @@ export default function ProfileScreen() {
 
       {stats && (
         <View style={[styles.infoSection, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Aujourd'hui</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Aujourd&apos;hui</Text>
           <View style={styles.statsGrid}>
             <StatCard label="Livres" value={stats.delivered} color={colors.success} bgColor={colors.success + "15"} />
             <StatCard label="Echecs" value={stats.failed} color={colors.danger} bgColor={colors.danger + "15"} />

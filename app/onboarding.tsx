@@ -20,51 +20,45 @@ import Animated, {
 import { Ionicons } from "@expo/vector-icons";
 import { OnboardingSlide } from "@/components/OnboardingSlide";
 import { storageService } from "@/services/storage";
+import { useAppTheme } from "@/hooks/useAppTheme";
 
 const { width } = Dimensions.get("window");
 
-const SLIDES = [
-  {
-    icon: "cube-outline" as const,
-    title: "Gérez vos colis",
-    description: "Visualisez tous vos colis du jour en un coup d'œil",
-    color: "#16314f",
-    accentColor: "#F36E18",
-  },
-  {
-    icon: "navigate-circle-outline" as const,
-    title: "Navigation optimisée",
-    description: "Suivez votre tournée avec des itinéraires intelligents",
-    color: "#16314f",
-    accentColor: "#2ECC71",
-  },
-  {
-    icon: "checkmark-done-circle-outline" as const,
-    title: "Livraison rapide",
-    description: "Validez vos livraisons avec signature et photo",
-    color: "#16314f",
-    accentColor: "#3498DB",
-  },
-  {
-    icon: "flash-outline" as const,
-    title: "Mode hors-ligne",
-    description: "Travaillez même sans connexion internet",
-    color: "#16314f",
-    accentColor: "#E8BE07",
-  },
-];
+type OnboardingSlideData = {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  description: string;
+  color: string;
+  accentColor: string;
+};
 
-function PaginationDots({ scrollX, slides }: { scrollX: SharedValue<number>; slides: typeof SLIDES }) {
+function PaginationDots({
+  scrollX,
+  slides,
+  dotColor,
+}: {
+  scrollX: SharedValue<number>;
+  slides: OnboardingSlideData[];
+  dotColor: string;
+}) {
   return (
     <View style={styles.paginationContainer}>
       {slides.map((_, index) => (
-        <PaginationDot key={index} index={index} scrollX={scrollX} />
+        <PaginationDot key={index} index={index} scrollX={scrollX} dotColor={dotColor} />
       ))}
     </View>
   );
 }
 
-function PaginationDot({ index, scrollX }: { index: number; scrollX: SharedValue<number> }) {
+function PaginationDot({
+  index,
+  scrollX,
+  dotColor,
+}: {
+  index: number;
+  scrollX: SharedValue<number>;
+  dotColor: string;
+}) {
   const dotStyle = useAnimatedStyle(() => {
     const inputRange = [
       (index - 1) * width,
@@ -92,14 +86,49 @@ function PaginationDot({ index, scrollX }: { index: number; scrollX: SharedValue
     };
   });
 
-  return <Animated.View style={[styles.dot, dotStyle]} />;
+  return <Animated.View style={[styles.dot, { backgroundColor: dotColor }, dotStyle]} />;
 }
 
 export default function OnboardingScreen() {
+  const { colors } = useAppTheme();
   const scrollViewRef = useRef<ScrollView>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollX = useSharedValue(0);
   const buttonScale = useSharedValue(1);
+
+  const slides = React.useMemo(
+    (): OnboardingSlideData[] => [
+      {
+        icon: "cube-outline" as const,
+        title: "Gérez vos colis",
+        description: "Visualisez tous vos colis du jour en un coup d'œil",
+        color: colors.primary,
+        accentColor: colors.accent,
+      },
+      {
+        icon: "navigate-circle-outline" as const,
+        title: "Navigation optimisée",
+        description: "Suivez votre tournée avec des itinéraires intelligents",
+        color: colors.primary,
+        accentColor: colors.success,
+      },
+      {
+        icon: "checkmark-done-circle-outline" as const,
+        title: "Livraison rapide",
+        description: "Validez vos livraisons avec signature et photo",
+        color: colors.primary,
+        accentColor: colors.info,
+      },
+      {
+        icon: "flash-outline" as const,
+        title: "Mode hors-ligne",
+        description: "Travaillez même sans connexion internet",
+        color: colors.primary,
+        accentColor: colors.warning,
+      },
+    ],
+    [colors]
+  );
 
   const handleScroll = (event: any) => {
     const offsetX = event.nativeEvent.contentOffset.x;
@@ -109,7 +138,7 @@ export default function OnboardingScreen() {
   };
 
   const handleNext = () => {
-    if (currentIndex < SLIDES.length - 1) {
+    if (currentIndex < slides.length - 1) {
       scrollViewRef.current?.scrollTo({
         x: width * (currentIndex + 1),
         animated: true,
@@ -138,11 +167,11 @@ export default function OnboardingScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.background}>
+      <View style={[styles.background, { backgroundColor: colors.background }]}>
         {/* Skip Button */}
-        {currentIndex < SLIDES.length - 1 && (
-          <Pressable style={styles.skipButton} onPress={handleSkip}>
-            <Text style={styles.skipText}>Passer</Text>
+        {currentIndex < slides.length - 1 && (
+          <Pressable style={[styles.skipButton, { backgroundColor: colors.surfaceSecondary }]} onPress={handleSkip}>
+            <Text style={[styles.skipText, { color: colors.text }]}>Passer</Text>
           </Pressable>
         )}
 
@@ -156,29 +185,29 @@ export default function OnboardingScreen() {
           scrollEventThrottle={16}
           style={styles.scrollView}
         >
-          {SLIDES.map((slide, index) => (
+          {slides.map((slide, index) => (
             <OnboardingSlide key={index} {...slide} index={index} />
           ))}
         </ScrollView>
 
         {/* Pagination Dots */}
-        <PaginationDots scrollX={scrollX} slides={SLIDES} />
+        <PaginationDots scrollX={scrollX} slides={slides} dotColor={colors.primary} />
 
         {/* Next/Finish Button */}
         <Animated.View style={[styles.buttonContainer, buttonAnimatedStyle]}>
           <Pressable 
             style={({ pressed }) => [
               styles.button,
-              { opacity: pressed ? 0.9 : 1 }
+              { opacity: pressed ? 0.9 : 1, backgroundColor: colors.accent, shadowColor: colors.accent }
             ]} 
             onPress={handleNext}
           >
             <Text style={styles.buttonText}>
-              {currentIndex === SLIDES.length - 1 ? "Commencer" : "Suivant"}
+              {currentIndex === slides.length - 1 ? "Commencer" : "Suivant"}
             </Text>
             <Ionicons
               name={
-                currentIndex === SLIDES.length - 1
+                currentIndex === slides.length - 1
                   ? "checkmark-circle"
                   : "arrow-forward"
               }
@@ -198,7 +227,6 @@ const styles = StyleSheet.create({
   },
   background: {
     flex: 1,
-    backgroundColor: "#F6F8FB",
   },
   skipButton: {
     position: "absolute",
@@ -208,10 +236,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: "rgba(22, 49, 79, 0.08)",
   },
   skipText: {
-    color: "#16314f",
     fontSize: 15,
     fontWeight: "600",
   },
@@ -228,7 +254,6 @@ const styles = StyleSheet.create({
   dot: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#16314f",
   },
   buttonContainer: {
     paddingHorizontal: 32,
@@ -238,11 +263,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F36E18",
     borderRadius: 14,
     paddingVertical: 16,
     gap: 8,
-    shadowColor: "#F36E18",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 12,

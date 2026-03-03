@@ -67,11 +67,11 @@ export default function IncidentScreen() {
 
   async function handleSubmit() {
     if (!selectedType) {
-      Alert.alert("Erreur", "Veuillez selectionner un type d'incident");
+      Alert.alert("Erreur", "Veuillez selectionner un type d&apos;incident");
       return;
     }
     if (!description.trim()) {
-      Alert.alert("Erreur", "Veuillez decrire l'incident");
+      Alert.alert("Erreur", "Veuillez decrire l&apos;incident");
       return;
     }
     setIsSubmitting(true);
@@ -112,7 +112,7 @@ export default function IncidentScreen() {
       >
         <View style={styles.content}>
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Type d'incident</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Type d&apos;incident</Text>
             <View style={styles.typeGrid}>
               {incidentTypes.map(([_, value]) => (
                 <Pressable
@@ -167,7 +167,7 @@ export default function IncidentScreen() {
               ]}
               value={description}
               onChangeText={setDescription}
-              placeholder="Decrivez l'incident en detail..."
+              placeholder="Decrivez l&apos;incident en detail..."
               placeholderTextColor={colors.textTertiary}
               multiline
               numberOfLines={4}
@@ -225,7 +225,7 @@ export default function IncidentScreen() {
             ) : (
               <>
                 <Ionicons name="warning" size={20} color="#fff" />
-                <Text style={styles.submitText}>Signaler l'incident</Text>
+                <Text style={styles.submitText}>Signaler l&apos;incident</Text>
               </>
             )}
           </Pressable>

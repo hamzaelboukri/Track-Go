@@ -111,7 +111,7 @@ export default function ScanScreen() {
                 <Ionicons name="scan" size={64} color={colors.primary} />
               </View>
               <Text style={[styles.scanHint, { color: colors.textSecondary }]}>
-                Le scan camera n'est pas disponible sur web. Utilisez un appareil mobile.
+                Le scan camera n&apos;est pas disponible sur web. Utilisez un appareil mobile.
               </Text>
             </>
           ) : !permission?.granted ? (
@@ -120,7 +120,7 @@ export default function ScanScreen() {
                 <Ionicons name="camera-outline" size={64} color={colors.primary} />
               </View>
               <Text style={[styles.scanHint, { color: colors.textSecondary }]}>
-                Autorisez l'acces camera pour scanner les codes-barres 1D/2D.
+                Autorisez l&apos;acces camera pour scanner les codes-barres 1D/2D.
               </Text>
               <Pressable
                 onPress={requestPermission}
@@ -206,7 +206,7 @@ export default function ScanScreen() {
               )}
 
               <Text style={[styles.scanHint, { color: colors.textSecondary }]}>
-                Alignez le code-barres dans le cadre puis maintenez l'appareil stable.
+                Alignez le code-barres dans le cadre puis maintenez l&apos;appareil stable.
               </Text>
             </>
           )}
