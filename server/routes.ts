@@ -195,6 +195,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  app.post("/api/upload/delivery-photo", (req: Request, res: Response) => {
+    // Note: Dans une vraie app, utiliser multer pour gérer multipart/form-data
+    // Pour le mock, on simule juste la réception
+    
+    const { parcelId, driverId, timestamp, width, height, fileSize } = req.body;
+    
+    console.log('[Photo Upload]', {
+      parcelId,
+      driverId,
+      timestamp: new Date(timestamp).toLocaleTimeString('fr-FR'),
+      size: `${width}x${height}`,
+      fileSize: `${Math.round(fileSize / 1024)} KB`,
+    });
+
+    // Simuler une URL de photo stockée
+    const photoUrl = `https://storage.example.com/deliveries/${parcelId}_${Date.now()}.jpg`;
+
+    return res.json({
+      success: true,
+      message: 'Photo uploadée avec succès',
+      photoUrl,
+      timestamp: new Date().toISOString(),
+    });
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
