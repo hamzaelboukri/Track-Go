@@ -244,7 +244,7 @@ export async function uploadPhoto(
   try {
     const formData = new FormData();
     
-    // Ajouter la photo
+    // Ajouter la photo avec le format React Native
     formData.append('photo', {
       uri: photo.uri,
       type: 'image/jpeg',
@@ -264,18 +264,21 @@ export async function uploadPhoto(
       method: 'POST',
       headers: {
         'Authorization': token ? `Bearer ${token}` : '',
+        // Ne PAS définir Content-Type, fetch le fait automatiquement avec boundary
       },
       body: formData,
     });
 
     if (!response.ok) {
-      throw new Error(`Upload failed: ${response.status}`);
+      const errorData = await response.json().catch(() => ({ message: response.statusText }));
+      throw new Error(errorData.message || `Upload failed: ${response.status}`);
     }
 
     const result = await response.json();
     console.log('[ImageService] Upload success:', result.photoUrl);
     
-    return result.photoUrl;
+    // Retourner l'URL complète
+    return `${apiUrl}${result.photoUrl}`;
   } catch (error) {
     console.error('[ImageService] Upload error:', error);
     throw error;

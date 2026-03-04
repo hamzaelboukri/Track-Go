@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, Pressable, Platform, Linking } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Pressable, Platform, Linking, Image } from "react-native";
 import { useLocalSearchParams, router, Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,316 +9,531 @@ import { useTournee } from "@/contexts/TourneeContext";
 import { StatusBadge } from "@/components/StatusBadge";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { typography } from "@/constants/typography";
 
 export default function ParcelDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { colors } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
   const insets = useSafeAreaInsets();
-  const { getParcelById, deliverParcel } = useTournee();
+  const { getParcelById } = useTournee();
 
   const parcel = getParcelById(id);
 
   if (!parcel) {
-    return <LoadingScreen message="Colis non trouve..." />;
-  }
-
-  function openMaps() {
-    const { latitude, longitude } = parcel!.address.coordinates;
-    const url = Platform.select({
-      ios: `maps:0,0?q=${latitude},${longitude}`,
-      android: `geo:${latitude},${longitude}?q=${latitude},${longitude}`,
-      default: `https://www.google.com/maps?q=${latitude},${longitude}`,
-    });
-    Linking.openURL(url!);
-  }
-
-  function handleCall() {
-    Linking.openURL(`tel:${parcel!.recipient.phone}`);
-  }
-
-  function handleDeliver() {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push({
-      pathname: "/parcel/deliver",
-      params: { id: parcel!.id, barcode: parcel!.barcode },
-    });
-  }
-
-  function handleIncident() {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push({
-      pathname: "/parcel/incident",
-      params: { id: parcel!.id },
-    });
+    return <LoadingScreen message="LECTURE DU MANIFESTE..." />;
   }
 
   const isActionable = parcel.status === "pending" || parcel.status === "in_progress";
 
+  const renderSectionHeader = (num: string, title: string) => (
+    <View style={styles.sectionHeader}>
+      <Text style={[styles.sectionNum, { color: colors.accent }]}>{num}</Text>
+      <Text style={[styles.sectionTitleText, { color: colors.textTertiary }]}>{title.toUpperCase()}</Text>
+      <View style={[styles.sectionLine, { backgroundColor: colors.border }]} />
+    </View>
+  );
+
   return (
-    <>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen
         options={{
-          title: `Colis #${parcel.order}`,
-          headerBackTitle: "Retour",
+          headerShown: true,
+          title: `FICHE LOGISTIQUE`,
+          headerTitleStyle: { fontFamily: typography.fontFamily.black, fontSize: 12 },
+          headerStyle: { backgroundColor: colors.background },
+          headerShadowVisible: false,
+          headerTintColor: colors.text,
+          headerLeft: () => (
+            <Pressable onPress={() => router.back()} style={{ marginLeft: 8 }}>
+              <Ionicons name="chevron-back" size={24} color={colors.text} />
+            </Pressable>
+          )
         }}
       />
+
+      {/* BACKGROUND DECORATION */}
+      <View style={styles.backgroundDecoration}>
+        {Array.from({ length: 10 }).map((_, i) => (
+          <View key={i} style={[styles.bgLine, { left: `${(i + 1) * 10}%`, backgroundColor: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)" }]} />
+        ))}
+      </View>
+
       <ScrollView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
+        style={styles.container}
+        contentContainerStyle={{ paddingBottom: 180 }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.topSection}>
-          <View style={styles.statusRow}>
+        {/* ─── TERMINAL HEADER: MISSION ID (Unified with Home) ─── */}
+        <View style={styles.terminalHeader}>
+          <View style={styles.idBlock}>
+            <View style={styles.liveIndicatorRow}>
+              <View style={[styles.pulsingLight, { backgroundColor: isActionable ? colors.accent : colors.success }]} />
+              <Text style={[styles.liveTag, { color: isActionable ? colors.accent : colors.success }]}>
+                {isActionable ? "MISSION_PENDING" : "MISSION_COMPLETED"}
+              </Text>
+            </View>
+            <View style={styles.idRow}>
+              <Text style={[styles.idHash, { color: colors.textTertiary }]}>#</Text>
+              <Text style={[styles.idValue, { color: colors.text }]}>{parcel.order}</Text>
+            </View>
+          </View>
+
+          <View style={styles.headerStatusCol}>
             <StatusBadge status={parcel.status} size="medium" />
             <PriorityBadge priority={parcel.priority} />
           </View>
-          <Text style={[styles.trackingCode, { color: colors.textTertiary }]}>
-            {parcel.trackingCode}
-          </Text>
         </View>
 
-        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
-          <Text style={[styles.cardTitle, { color: colors.text }]}>Destinataire</Text>
-          <View style={styles.cardRow}>
-            <Ionicons name="person-outline" size={18} color={colors.textSecondary} />
-            <Text style={[styles.cardValue, { color: colors.text }]}>{parcel.recipient.name}</Text>
+        {/* ─── TRACKING BAR ─── */}
+        <View style={[styles.trackingBar, { backgroundColor: isDark ? "#0A0A0A" : "#F6F6F6", borderColor: colors.border }]}>
+          <Ionicons name="barcode-outline" size={18} color={colors.textSecondary} />
+          <Text style={[styles.trackingValue, { color: colors.textSecondary }]}>{parcel.trackingCode}</Text>
+          <View style={styles.spacer} />
+          <View style={[styles.typeBadge, { borderColor: colors.textTertiary }]}>
+            <Text style={[styles.typeBadgeText, { color: colors.textTertiary }]}>BOX-A</Text>
           </View>
-          <View style={styles.cardRow}>
-            <Ionicons name="call-outline" size={18} color={colors.textSecondary} />
-            <Pressable onPress={handleCall}>
-              <Text style={[styles.cardValue, styles.link, { color: colors.info }]}>{parcel.recipient.phone}</Text>
+        </View>
+
+        {/* ─── SECTION 01: DESTINATAIRE ─── */}
+        <View style={styles.contentSection}>
+          {renderSectionHeader("01", "Destinataire")}
+          <View style={styles.recipientBlock}>
+            <Text style={[styles.recipientName, { color: colors.text }]}>{parcel.recipient.name.toUpperCase()}</Text>
+            <Pressable
+              onPress={() => Linking.openURL(`tel:${parcel.recipient.phone}`)}
+              style={[styles.contactButton, { borderColor: colors.border }]}
+            >
+              <Ionicons name="call" size={16} color={colors.accent} />
+              <Text style={[styles.contactText, { color: colors.text }]}>{parcel.recipient.phone}</Text>
             </Pressable>
           </View>
-          {parcel.recipient.email && (
-            <View style={styles.cardRow}>
-              <Ionicons name="mail-outline" size={18} color={colors.textSecondary} />
-              <Text style={[styles.cardValue, { color: colors.text }]}>{parcel.recipient.email}</Text>
-            </View>
-          )}
         </View>
 
-        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
-          <View style={styles.cardTitleRow}>
-            <Text style={[styles.cardTitle, { color: colors.text }]}>Adresse</Text>
-            <Pressable onPress={openMaps} hitSlop={10}>
-              <Ionicons name="navigate-outline" size={20} color={colors.info} />
-            </Pressable>
-          </View>
-          <View style={styles.cardRow}>
-            <Ionicons name="location-outline" size={18} color={colors.textSecondary} />
-            <Text style={[styles.cardValue, { color: colors.text }]}>
-              {parcel.address.street}
-            </Text>
-          </View>
-          <View style={styles.cardRow}>
-            <Ionicons name="business-outline" size={18} color={colors.textSecondary} />
-            <Text style={[styles.cardValue, { color: colors.text }]}>
-              {parcel.address.postalCode} {parcel.address.city}
-            </Text>
-          </View>
-        </View>
-
-        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
-          <Text style={[styles.cardTitle, { color: colors.text }]}>Details du colis</Text>
-          <View style={styles.detailsGrid}>
-            <DetailItem icon="scale-outline" label="Poids" value={`${parcel.weight} kg`} colors={colors} />
-            <DetailItem icon="barcode-outline" label="Code-barres" value={parcel.barcode} colors={colors} />
-            {parcel.dimensions && (
-              <DetailItem
-                icon="resize-outline"
-                label="Dimensions"
-                value={`${parcel.dimensions.length}x${parcel.dimensions.width}x${parcel.dimensions.height} cm`}
-                colors={colors}
-              />
-            )}
-          </View>
-          {parcel.notes && (
-            <View style={[styles.notesBox, { backgroundColor: colors.warning + "15" }]}>
-              <Ionicons name="information-circle-outline" size={16} color={colors.warning} />
-              <Text style={[styles.notesText, { color: colors.text }]}>{parcel.notes}</Text>
-            </View>
-          )}
-        </View>
-
-        {parcel.deliveryProof && (
-          <View style={[styles.card, { backgroundColor: colors.success + "08", borderColor: colors.success + "30" }]}>
-            <Text style={[styles.cardTitle, { color: colors.success }]}>Preuve de livraison</Text>
-            <View style={styles.cardRow}>
-              <Ionicons name="time-outline" size={18} color={colors.success} />
-              <Text style={[styles.cardValue, { color: colors.text }]}>
-                {new Date(parcel.deliveryProof.timestamp).toLocaleString("fr-FR")}
+        {/* ─── SECTION 02: LOCALISATION ─── */}
+        <View style={styles.contentSection}>
+          {renderSectionHeader("02", "Localisation")}
+          <View style={styles.addressBlock}>
+            <View style={styles.addressInfo}>
+              <Text style={[styles.streetText, { color: colors.text }]}>{parcel.address.street.toUpperCase()}</Text>
+              <Text style={[styles.cityText, { color: colors.textSecondary }]}>
+                {parcel.address.postalCode} • {parcel.address.city.toUpperCase()}
               </Text>
             </View>
-            <View style={styles.cardRow}>
-              <Ionicons name="location-outline" size={18} color={colors.success} />
-              <Text style={[styles.cardValue, { color: colors.text }]}>
-                GPS: {parcel.deliveryProof.coordinates.latitude.toFixed(4)}, {parcel.deliveryProof.coordinates.longitude.toFixed(4)}
+
+            <Pressable
+              onPress={() => {
+                const { latitude, longitude } = parcel.address.coordinates;
+                const url = Platform.select({
+                  ios: `maps:0,0?q=${latitude},${longitude}`,
+                  android: `geo:${latitude},${longitude}?q=${latitude},${longitude}`,
+                });
+                Linking.openURL(url!);
+              }}
+              style={[styles.navButton, { backgroundColor: colors.text }]}
+            >
+              <Ionicons name="location" size={20} color={colors.background} />
+              <Text style={[styles.navButtonText, { color: colors.background }]}>LANCER LE GPS</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* ─── SECTION 03: PARAMÈTRES TECHNIQUES (Asymmetric Grid like Home) ─── */}
+        <View style={styles.contentSection}>
+          {renderSectionHeader("03", "Paramètres Techniques")}
+          <View style={styles.metricsGrid}>
+            <View style={[styles.techMain, { backgroundColor: isDark ? "#0A0A0A" : "#F6F6F6" }]}>
+              <Text style={[styles.techMiniLabel, { color: colors.textTertiary }]}>POIDS BRUT</Text>
+              <Text style={[styles.techLargeValue, { color: colors.text }]}>{parcel.weight} KG</Text>
+              <View style={[styles.accentCorner, { borderTopColor: colors.accent, borderRightColor: colors.accent }]} />
+            </View>
+            <View style={styles.techSideCol}>
+              <View style={[styles.techSmall, { backgroundColor: isDark ? "#0A0A0A" : "#F6F6F6" }]}>
+                <Text style={[styles.techMiniLabel, { color: colors.textTertiary }]}>CONTENU</Text>
+                <Text style={[styles.techSmallValue, { color: colors.text }]}>STANDARD</Text>
+              </View>
+              <View style={[styles.techSmall, { backgroundColor: isDark ? "#0A0A0A" : "#F6F6F6" }]}>
+                <Text style={[styles.techMiniLabel, { color: colors.textTertiary }]}>VOLUME</Text>
+                <Text style={[styles.techSmallValue, { color: colors.text }]}>BOX-A</Text>
+              </View>
+            </View>
+          </View>
+
+          {parcel.notes && (
+            <View style={[styles.notesContainer, { borderLeftColor: colors.accent, backgroundColor: isDark ? "#0A0A0A" : "#F9F9F9" }]}>
+              <Text style={[styles.notesLabel, { color: colors.textSecondary }]}>INSTRUCTIONS OPÉRATIONNELLES:</Text>
+              <Text style={[styles.notesContent, { color: colors.text }]}>{parcel.notes}</Text>
+            </View>
+          )}
+        </View>
+
+        {/* ─── INCIDENT / COMPLETION STATUS ─── */}
+        {(parcel.deliveryProof || parcel.incident) && (
+          <View style={[styles.terminalStatusBlock, { borderColor: parcel.incident ? colors.danger : colors.success }]}>
+            <Ionicons
+              name={parcel.incident ? "warning-outline" : "checkmark-circle-outline"}
+              size={28}
+              color={parcel.incident ? colors.danger : colors.success}
+            />
+            <View style={styles.statusInfo}>
+              <Text style={[styles.statusTitle, { color: parcel.incident ? colors.danger : colors.success }]}>
+                {parcel.incident ? "ANOMALIE DÉTECTÉE" : "OPÉRATION RÉUSSIE"}
+              </Text>
+              <Text style={[styles.statusDesc, { color: colors.textSecondary }]}>
+                {parcel.incident ? parcel.incident.description : `MANIFESTE CLÔTURÉ LE ${new Date(parcel.deliveryProof!.timestamp).toLocaleDateString('fr-FR')}`}
               </Text>
             </View>
           </View>
         )}
 
-        {parcel.incident && (
-          <View style={[styles.card, { backgroundColor: colors.danger + "08", borderColor: colors.danger + "30" }]}>
-            <Text style={[styles.cardTitle, { color: colors.danger }]}>Incident signale</Text>
-            <Text style={[styles.cardValue, { color: colors.text }]}>{parcel.incident.description}</Text>
+        {/* ─── SECTION 04: PREUVE DE LIVRAISON ─── */}
+        {parcel.deliveryProof && (parcel.deliveryProof.photoUri || parcel.deliveryProof.signatureUri) && (
+          <View style={styles.contentSection}>
+            {renderSectionHeader("04", "Preuve de Livraison")}
+            
+            {parcel.deliveryProof.photoUri && (
+              <View style={styles.proofBlock}>
+                <Text style={[styles.proofLabel, { color: colors.textTertiary }]}>PHOTO DE LIVRAISON</Text>
+                <Image
+                  source={{ uri: parcel.deliveryProof.photoUri }}
+                  style={[styles.proofImage, { borderColor: colors.border }]}
+                  resizeMode="cover"
+                />
+              </View>
+            )}
+
+            {parcel.deliveryProof.signatureUri && (
+              <View style={styles.proofBlock}>
+                <Text style={[styles.proofLabel, { color: colors.textTertiary }]}>SIGNATURE CLIENT</Text>
+                <Image
+                  source={{ uri: parcel.deliveryProof.signatureUri }}
+                  style={[styles.signatureImage, { borderColor: colors.border, backgroundColor: isDark ? "#0A0A0A" : "#FFF" }]}
+                  resizeMode="contain"
+                />
+              </View>
+            )}
           </View>
         )}
       </ScrollView>
 
+      {/* ─── ACTION TERMINAL ─── */}
       {isActionable && (
-        <View style={[styles.actionBar, { backgroundColor: colors.surface, borderTopColor: colors.border, paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 16) }]}>
+        <View style={[styles.actionTerminal, { backgroundColor: colors.background, paddingBottom: insets.bottom + 24 }]}>
           <Pressable
-            onPress={handleIncident}
-            style={({ pressed }) => [
-              styles.actionButton,
-              styles.incidentButton,
-              { borderColor: colors.danger, opacity: pressed ? 0.8 : 1 },
-            ]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push({ pathname: "/parcel/incident", params: { id: parcel.id } });
+            }}
+            style={[styles.incidentBtn, { borderColor: colors.danger }]}
           >
-            <Ionicons name="warning-outline" size={20} color={colors.danger} />
-            <Text style={[styles.actionButtonText, { color: colors.danger }]}>Incident</Text>
+            <Ionicons name="warning-outline" size={24} color={colors.danger} />
           </Pressable>
+
           <Pressable
-            onPress={handleDeliver}
-            style={({ pressed }) => [
-              styles.actionButton,
-              styles.deliverButton,
-              { backgroundColor: colors.success, opacity: pressed ? 0.9 : 1 },
-            ]}
+            onPress={() => {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              router.push({ pathname: "/parcel/deliver", params: { id: parcel.id, barcode: parcel.barcode } });
+            }}
+            style={[styles.confirmBtn, { backgroundColor: isDark ? colors.text : "#000" }]}
           >
-            <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
-            <Text style={[styles.actionButtonText, { color: "#fff" }]}>Valider livraison</Text>
+            <Text style={[styles.confirmText, { color: isDark ? colors.background : "#FFF" }]}>VALIDER L'ÉTAPE</Text>
+            <View style={styles.btnIconBox}>
+              <Ionicons name="arrow-forward" size={18} color={isDark ? colors.background : "#FFF"} />
+            </View>
           </Pressable>
         </View>
       )}
-    </>
-  );
-}
-
-function DetailItem({ icon, label, value, colors }: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  value: string;
-  colors: any;
-}) {
-  return (
-    <View style={styles.detailItem}>
-      <Ionicons name={icon} size={16} color={colors.textTertiary} />
-      <Text style={[styles.detailLabel, { color: colors.textTertiary }]}>{label}</Text>
-      <Text style={[styles.detailValue, { color: colors.text }]}>{value}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { flex: 1 },
+  backgroundDecoration: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: -1,
   },
-  topSection: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    gap: 8,
-    alignItems: "flex-start",
+  bgLine: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    width: 1,
   },
-  statusRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  trackingCode: {
-    fontSize: 13,
-    fontWeight: "500",
-    fontFamily: Platform.select({ ios: "Menlo", default: "monospace" }),
-  },
-  card: {
-    marginHorizontal: 16,
-    marginBottom: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 16,
-    gap: 10,
-  },
-  cardTitleRow: {
+  terminalHeader: {
+    paddingHorizontal: 24,
+    paddingTop: 32,
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-end",
+    marginBottom: 24,
   },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  cardRow: {
+  idBlock: { gap: 4 },
+  liveIndicatorRow: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 8,
+    marginBottom: 4,
+  },
+  pulsingLight: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  liveTag: {
+    fontSize: 9,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: 1.5,
+  },
+  idRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 4,
+  },
+  idHash: {
+    fontSize: 24,
+    fontFamily: typography.fontFamily.black,
+    marginBottom: 8,
+  },
+  idValue: {
+    fontSize: 56,
+    fontFamily: typography.fontFamily.bold,
+    lineHeight: 56,
+    letterSpacing: -1,
+  },
+  headerStatusCol: {
+    gap: 12,
+    alignItems: "flex-end",
+    paddingBottom: 4,
+  },
+  trackingBar: {
+    marginHorizontal: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 32,
+  },
+  trackingValue: {
+    fontSize: 13,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: 3,
+  },
+  spacer: { flex: 1 },
+  typeBadge: {
+    borderWidth: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  typeBadgeText: {
+    fontSize: 8,
+    fontFamily: typography.fontFamily.black,
+  },
+
+  contentSection: {
+    paddingHorizontal: 24,
+    marginBottom: 32,
+    gap: 16,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  sectionNum: {
+    fontSize: 10,
+    fontFamily: typography.fontFamily.black,
+  },
+  sectionTitleText: {
+    fontSize: 9,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: 2,
+  },
+  sectionLine: {
+    flex: 1,
+    height: 1,
+  },
+  recipientBlock: {
+    gap: 12,
+  },
+  recipientName: {
+    fontSize: 22,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: -0.5,
+  },
+  contactButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    alignSelf: 'flex-start',
   },
-  cardValue: {
+  contactText: {
     fontSize: 14,
-    fontWeight: "500",
-    flex: 1,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: 0.5,
   },
-  link: {
-    textDecorationLine: "underline",
+  addressBlock: {
+    gap: 16,
   },
-  detailsGrid: {
-    gap: 8,
+  addressInfo: { gap: 4 },
+  streetText: {
+    fontSize: 18,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: -0.5,
+    lineHeight: 22,
   },
-  detailItem: {
+  cityText: {
+    fontSize: 14,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: 1,
+  },
+  navButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    justifyContent: "center",
+    gap: 12,
+    paddingVertical: 18,
   },
-  detailLabel: {
-    fontSize: 12,
-    fontWeight: "500",
-    width: 80,
-  },
-  detailValue: {
+  navButtonText: {
     fontSize: 13,
-    fontWeight: "600",
-    flex: 1,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: 2,
   },
-  notesBox: {
+  metricsGrid: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    padding: 12,
-    borderRadius: 10,
-    marginTop: 4,
+    gap: 12,
   },
-  notesText: {
-    fontSize: 13,
-    fontWeight: "500",
+  techMain: {
+    flex: 1.4,
+    padding: 16,
+    justifyContent: "center",
+    position: "relative",
+  },
+  accentCorner: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    width: 12,
+    height: 12,
+    borderTopWidth: 2,
+    borderRightWidth: 2,
+  },
+  techSideCol: {
     flex: 1,
-    lineHeight: 18,
+    gap: 12,
   },
-  actionBar: {
+  techSmall: {
+    flex: 1,
+    padding: 12,
+    justifyContent: "center",
+  },
+  techMiniLabel: {
+    fontSize: 8,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  techLargeValue: {
+    fontSize: 22,
+    fontFamily: typography.fontFamily.bold,
+  },
+  techSmallValue: {
+    fontSize: 14,
+    fontFamily: typography.fontFamily.bold,
+  },
+  notesContainer: {
+    borderLeftWidth: 3,
+    paddingLeft: 16,
+    paddingVertical: 12,
+    paddingRight: 12,
+    gap: 6,
+    marginTop: 8,
+  },
+  notesLabel: {
+    fontSize: 9,
+    fontFamily: typography.fontFamily.black,
+    letterSpacing: 1,
+  },
+  notesContent: {
+    fontSize: 15,
+    fontFamily: typography.fontFamily.medium,
+    lineHeight: 22,
+  },
+  terminalStatusBlock: {
+    marginHorizontal: 24,
+    borderWidth: 2,
+    padding: 20,
+    flexDirection: "row",
+    gap: 16,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  statusInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  statusTitle: {
+    fontSize: 13,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: 1,
+  },
+  statusDesc: {
+    fontSize: 11,
+    fontFamily: typography.fontFamily.bold,
+    lineHeight: 16,
+  },
+  actionTerminal: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
     flexDirection: "row",
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    borderTopWidth: 1,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    gap: 12,
   },
-  actionButton: {
+  incidentBtn: {
+    width: 64,
+    height: 64,
+    borderWidth: 2,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  confirmBtn: {
     flex: 1,
+    height: 64,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 14,
-    borderRadius: 12,
-    gap: 6,
+    gap: 12,
   },
-  incidentButton: {
-    borderWidth: 1.5,
-    backgroundColor: "transparent",
-  },
-  deliverButton: {},
-  actionButtonText: {
+  confirmText: {
     fontSize: 14,
-    fontWeight: "700",
+    fontFamily: typography.fontFamily.black,
+    letterSpacing: 2,
+  },
+  btnIconBox: {
+    padding: 4,
+  },
+  proofBlock: {
+    gap: 12,
+  },
+  proofLabel: {
+    fontSize: 9,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: 2,
+  },
+  proofImage: {
+    width: "100%",
+    height: 240,
+    borderWidth: 1,
+  },
+  signatureImage: {
+    width: "100%",
+    height: 160,
+    borderWidth: 1,
   },
 });

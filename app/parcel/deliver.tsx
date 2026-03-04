@@ -8,6 +8,7 @@ import * as Haptics from "expo-haptics";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { useTournee } from "@/contexts/TourneeContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { typography } from "@/constants/typography";
 import { PhotoCapture } from "@/components/PhotoCapture";
 import { SignatureCapture } from "@/components/SignatureCapture";
@@ -20,6 +21,7 @@ export default function DeliverScreen() {
   const { colors, isDark } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { getParcelById, deliverParcel } = useTournee();
+  const { driver } = useAuth();
   const parcel = getParcelById(id);
 
   const [scannedCode, setScannedCode] = useState("");
@@ -70,15 +72,26 @@ export default function DeliverScreen() {
     if (!location) { Alert.alert("ERREUR", "POSITION GPS REQUISE"); return; }
     if (!photo) { Alert.alert("ERREUR", "PHOTO REQUISE"); return; }
     if (!signature) { Alert.alert("ERREUR", "SIGNATURE REQUISE"); return; }
+    
     setIsSubmitting(true);
     try {
+      // 1. Upload photo first
+      const { uploadPhoto } = await import("@/services/imageService");
+      const photoUrl = await uploadPhoto(photo, id, driver?.id || "unknown");
+      
+      // 2. Upload signature
+      const { uploadSignature } = await import("@/services/signatureService");
+      const signatureUrl = await uploadSignature(signature, id, driver?.id || "unknown");
+      
+      // 3. Submit delivery proof with server URLs
       await deliverParcel(id, {
         scannedBarcode: scannedCode.trim().toUpperCase(),
         coordinates: location,
         timestamp: new Date().toISOString(),
-        photoUri: photo.uri,
-        signatureUri: signature.base64,
+        photoUri: photoUrl,
+        signatureUri: signatureUrl,
       });
+      
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.dismiss(2);
     } catch (e: any) {

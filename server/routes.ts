@@ -1,9 +1,49 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "node:http";
+import multer from "multer";
+import path from "node:path";
+import fs from "node:fs";
 import { mockDrivers, getMockTour } from "./data/mock-data";
-import type { Tour, Parcel, Incident, DeliveryProof } from "../shared/schema";
+import type { Tour, DeliveryProof, Incident, IncidentTypeValue } from "../shared/schema";
 
 const activeTours = new Map<string, Tour>();
+
+// Configuration multer pour le stockage des fichiers
+const uploadsDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const subDir = file.fieldname === "photo" ? "photos" : "signatures";
+    const targetDir = path.join(uploadsDir, subDir);
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+    cb(null, targetDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    const ext = path.extname(file.originalname);
+    cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5 MB max
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = ["image/jpeg", "image/jpg", "image/png"];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Type de fichier non autorisé"));
+    }
+  },
+});
 
 function normalizeBarcode(value: string | undefined): string {
   return (value || "").trim().replace(/\s+/g, "").toUpperCase();
@@ -19,6 +59,16 @@ function getOrCreateTour(driverId: string): Tour {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Servir les fichiers uploadés
+  app.use("/uploads", (req, res, next) => {
+    const filePath = path.join(uploadsDir, req.path);
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      res.status(404).json({ message: "Fichier non trouvé" });
+    }
+  });
+
   app.post("/api/auth/login", (req: Request, res: Response) => {
     const { employeeId, password } = req.body;
     if (!employeeId || !password) {
@@ -38,7 +88,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/driver/:driverId", (req: Request, res: Response) => {
-    const driver = mockDrivers.find((d) => d.id === req.params.driverId);
+    const driverId = req.params.driverId as string;
+    const driver = mockDrivers.find((d) => d.id === driverId);
     if (!driver) {
       return res.status(404).json({ message: "Livreur non trouve" });
     }
@@ -46,12 +97,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/tour/:driverId", (req: Request, res: Response) => {
-    const tour = getOrCreateTour(req.params.driverId);
+    const driverId = req.params.driverId as string;
+    const tour = getOrCreateTour(driverId);
     return res.json(tour);
   });
 
   app.get("/api/tour/:driverId/stats", (req: Request, res: Response) => {
-    const tour = getOrCreateTour(req.params.driverId);
+    const driverId = req.params.driverId as string;
+    const tour = getOrCreateTour(driverId);
     const total = tour.parcels.length;
     const delivered = tour.parcels.filter((p) => p.status === "delivered").length;
     const failed = tour.parcels.filter((p) => p.status === "failed").length;
@@ -68,8 +121,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/tour/:driverId/parcel/:parcelId", (req: Request, res: Response) => {
-    const tour = getOrCreateTour(req.params.driverId);
-    const parcel = tour.parcels.find((p) => p.id === req.params.parcelId);
+    const driverId = req.params.driverId as string;
+    const parcelId = req.params.parcelId as string;
+    const tour = getOrCreateTour(driverId);
+    const parcel = tour.parcels.find((p) => p.id === parcelId);
     if (!parcel) {
       return res.status(404).json({ message: "Colis non trouve" });
     }
@@ -77,8 +132,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.put("/api/tour/:driverId/parcel/:parcelId/status", (req: Request, res: Response) => {
-    const tour = getOrCreateTour(req.params.driverId);
-    const parcel = tour.parcels.find((p) => p.id === req.params.parcelId);
+    const driverId = req.params.driverId as string;
+    const parcelId = req.params.parcelId as string;
+    const tour = getOrCreateTour(driverId);
+    const parcel = tour.parcels.find((p) => p.id === parcelId);
     if (!parcel) {
       return res.status(404).json({ message: "Colis non trouve" });
     }
@@ -104,8 +161,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/tour/:driverId/parcel/:parcelId/deliver", (req: Request, res: Response) => {
-    const tour = getOrCreateTour(req.params.driverId);
-    const parcel = tour.parcels.find((p) => p.id === req.params.parcelId);
+    const driverId = req.params.driverId as string;
+    const parcelId = req.params.parcelId as string;
+    const tour = getOrCreateTour(driverId);
+    const parcel = tour.parcels.find((p) => p.id === parcelId);
     if (!parcel) {
       return res.status(404).json({ message: "Colis non trouve" });
     }
@@ -138,8 +197,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/tour/:driverId/parcel/:parcelId/incident", (req: Request, res: Response) => {
-    const tour = getOrCreateTour(req.params.driverId);
-    const parcel = tour.parcels.find((p) => p.id === req.params.parcelId);
+    const driverId = req.params.driverId as string;
+    const parcelId = req.params.parcelId as string;
+    const tour = getOrCreateTour(driverId);
+    const parcel = tour.parcels.find((p) => p.id === parcelId);
     if (!parcel) {
       return res.status(404).json({ message: "Colis non trouve" });
     }
@@ -165,7 +226,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/tour/:driverId/start", (req: Request, res: Response) => {
-    const tour = getOrCreateTour(req.params.driverId);
+    const driverId = req.params.driverId as string;
+    const tour = getOrCreateTour(driverId);
     if (tour.status === "not_started") {
       tour.status = "in_progress";
       tour.startTime = new Date().toISOString();
@@ -195,53 +257,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  app.post("/api/upload/delivery-photo", (req: Request, res: Response) => {
-    // Note: Dans une vraie app, utiliser multer pour gérer multipart/form-data
-    // Pour le mock, on simule juste la réception
-    
-    const { parcelId, driverId, timestamp, width, height, fileSize } = req.body;
-    
-    console.log('[Photo Upload]', {
-      parcelId,
-      driverId,
-      timestamp: new Date(timestamp).toLocaleTimeString('fr-FR'),
-      size: `${width}x${height}`,
-      fileSize: `${Math.round(fileSize / 1024)} KB`,
-    });
+  app.post("/api/upload/delivery-photo", upload.single("photo"), (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "Aucun fichier reçu" });
+      }
 
-    // Simuler une URL de photo stockée
-    const photoUrl = `https://storage.example.com/deliveries/${parcelId}_${Date.now()}.jpg`;
+      const { parcelId, driverId, timestamp, width, height, fileSize } = req.body;
 
-    return res.json({
-      success: true,
-      message: 'Photo uploadée avec succès',
-      photoUrl,
-      timestamp: new Date().toISOString(),
-    });
+      console.log("[Photo Upload]", {
+        parcelId,
+        driverId,
+        timestamp: new Date(timestamp).toLocaleTimeString("fr-FR"),
+        size: `${width}x${height}`,
+        fileSize: `${Math.round(fileSize / 1024)} KB`,
+        savedAs: req.file.filename,
+      });
+
+      // URL accessible pour récupérer la photo
+      const photoUrl = `/uploads/photos/${req.file.filename}`;
+
+      return res.json({
+        success: true,
+        message: "Photo uploadée avec succès",
+        photoUrl,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error("[Photo Upload Error]", error);
+      return res.status(500).json({ message: error.message || "Erreur upload photo" });
+    }
   });
 
-  app.post("/api/upload/signature", (req: Request, res: Response) => {
-    // Note: Dans une vraie app, utiliser multer pour gérer multipart/form-data
-    // Pour le mock, on simule juste la réception
-    
-    const { parcelId, driverId, timestamp, signerName } = req.body;
-    
-    console.log('[Signature Upload]', {
-      parcelId,
-      driverId,
-      signerName,
-      timestamp: new Date(timestamp).toLocaleTimeString('fr-FR'),
-    });
+  app.post("/api/upload/signature", upload.single("signature"), (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "Aucun fichier reçu" });
+      }
 
-    // Simuler une URL de signature stockée
-    const signatureUrl = `https://storage.example.com/signatures/${parcelId}_${Date.now()}.png`;
+      const { parcelId, driverId, timestamp, signerName } = req.body;
 
-    return res.json({
-      success: true,
-      message: 'Signature uploadée avec succès',
-      signatureUrl,
-      timestamp: new Date().toISOString(),
-    });
+      console.log("[Signature Upload]", {
+        parcelId,
+        driverId,
+        signerName,
+        timestamp: new Date(timestamp).toLocaleTimeString("fr-FR"),
+        savedAs: req.file.filename,
+      });
+
+      // URL accessible pour récupérer la signature
+      const signatureUrl = `/uploads/signatures/${req.file.filename}`;
+
+      return res.json({
+        success: true,
+        message: "Signature uploadée avec succès",
+        signatureUrl,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error("[Signature Upload Error]", error);
+      return res.status(500).json({ message: error.message || "Erreur upload signature" });
+    }
   });
 
   const httpServer = createServer(app);

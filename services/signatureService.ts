@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { File, Paths } from 'expo-file-system';
 
 export interface SignatureResult {
   base64: string;
@@ -138,35 +139,52 @@ export async function uploadSignature(
   token?: string
 ): Promise<string> {
   try {
-    // Pour simplifier, envoyer directement le Base64
-    // En production, convertir en fichier et utiliser FormData
+    // Convertir Base64 en fichier temporaire
+    const base64Data = signature.base64.split(',')[1] || signature.base64;
+    const tempFile = new File(Paths.cache, `signature_${parcelId}_${Date.now()}.png`);
     
-    const payload = {
-      signature: signature.base64,
-      parcelId,
-      driverId,
-      timestamp: signature.timestamp,
-      signerName: signature.signerName,
-    };
+    await tempFile.write(base64Data, { encoding: 'base64' });
+
+    const formData = new FormData();
+    
+    // Ajouter la signature avec le format React Native
+    formData.append('signature', {
+      uri: tempFile.uri,
+      type: 'image/png',
+      name: `signature_${parcelId}_${Date.now()}.png`,
+    } as any);
+
+    // Ajouter les métadonnées
+    formData.append('parcelId', parcelId);
+    formData.append('driverId', driverId);
+    formData.append('timestamp', signature.timestamp);
+    if (signature.signerName) {
+      formData.append('signerName', signature.signerName);
+    }
 
     const apiUrl = process.env.EXPO_PUBLIC_DOMAIN || 'http://localhost:5080';
     const response = await fetch(`${apiUrl}/api/upload/signature`, {
       method: 'POST',
       headers: {
         'Authorization': token ? `Bearer ${token}` : '',
-        'Content-Type': 'application/json',
+        // Ne PAS définir Content-Type, fetch le fait automatiquement avec boundary
       },
-      body: JSON.stringify(payload),
+      body: formData,
     });
 
     if (!response.ok) {
-      throw new Error(`Upload failed: ${response.status}`);
+      const errorData = await response.json().catch(() => ({ message: response.statusText }));
+      throw new Error(errorData.message || `Upload failed: ${response.status}`);
     }
 
     const result = await response.json();
     console.log('[SignatureService] Upload success:', result.signatureUrl);
     
-    return result.signatureUrl;
+    // Nettoyer le fichier temporaire
+    await tempFile.delete();
+    
+    // Retourner l'URL complète
+    return `${apiUrl}${result.signatureUrl}`;
   } catch (error) {
     console.error('[SignatureService] Upload error:', error);
     throw error;
