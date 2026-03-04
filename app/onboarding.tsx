@@ -6,6 +6,8 @@ import {
   Dimensions,
   Pressable,
   ScrollView,
+  Platform,
+  StatusBar,
 } from "react-native";
 import { router } from "expo-router";
 import Animated, {
@@ -20,41 +22,31 @@ import Animated, {
 import { Ionicons } from "@expo/vector-icons";
 import { OnboardingSlide } from "@/components/OnboardingSlide";
 import { storageService } from "@/services/storage";
+import { useAppTheme } from "@/hooks/useAppTheme";
+import { typography } from "@/constants/typography";
 
-const { width } = Dimensions.get("window");
+const { width, height } = Dimensions.get("window");
 
-const SLIDES = [
-  {
-    icon: "cube-outline" as const,
-    title: "Gérez vos colis",
-    description: "Visualisez tous vos colis du jour en un coup d'œil",
-    color: "#16314f",
-    accentColor: "#F36E18",
-  },
-  {
-    icon: "navigate-circle-outline" as const,
-    title: "Navigation optimisée",
-    description: "Suivez votre tournée avec des itinéraires intelligents",
-    color: "#16314f",
-    accentColor: "#2ECC71",
-  },
-  {
-    icon: "checkmark-done-circle-outline" as const,
-    title: "Livraison rapide",
-    description: "Validez vos livraisons avec signature et photo",
-    color: "#16314f",
-    accentColor: "#3498DB",
-  },
-  {
-    icon: "flash-outline" as const,
-    title: "Mode hors-ligne",
-    description: "Travaillez même sans connexion internet",
-    color: "#16314f",
-    accentColor: "#E8BE07",
-  },
-];
+// Image imports
+const onboardingImgs = {
+  logistics: require("../assets/images/onboarding_logistics_hero.png"),
+  navigation: require("../assets/images/onboarding_navigation_hero.png"),
+  validation: require("../assets/images/onboarding_validation_hero.png"),
+};
 
-function PaginationDots({ scrollX, slides }: { scrollX: SharedValue<number>; slides: typeof SLIDES }) {
+type OnboardingSlideData = {
+  title: string;
+  description: string;
+  image: any;
+};
+
+function PaginationDots({
+  scrollX,
+  slides,
+}: {
+  scrollX: SharedValue<number>;
+  slides: OnboardingSlideData[];
+}) {
   return (
     <View style={styles.paginationContainer}>
       {slides.map((_, index) => (
@@ -64,7 +56,13 @@ function PaginationDots({ scrollX, slides }: { scrollX: SharedValue<number>; sli
   );
 }
 
-function PaginationDot({ index, scrollX }: { index: number; scrollX: SharedValue<number> }) {
+function PaginationDot({
+  index,
+  scrollX,
+}: {
+  index: number;
+  scrollX: SharedValue<number>;
+}) {
   const dotStyle = useAnimatedStyle(() => {
     const inputRange = [
       (index - 1) * width,
@@ -72,23 +70,23 @@ function PaginationDot({ index, scrollX }: { index: number; scrollX: SharedValue
       (index + 1) * width,
     ];
 
-    const dotWidth = interpolate(
-      scrollX.value,
-      inputRange,
-      [8, 32, 8],
-      Extrapolation.CLAMP
-    );
-
     const opacity = interpolate(
       scrollX.value,
       inputRange,
-      [0.4, 1, 0.4],
+      [0.3, 1, 0.3],
+      Extrapolation.CLAMP
+    );
+
+    const scale = interpolate(
+      scrollX.value,
+      inputRange,
+      [0.8, 1.2, 0.8],
       Extrapolation.CLAMP
     );
 
     return {
-      width: withSpring(dotWidth),
       opacity: withTiming(opacity),
+      transform: [{ scale: withSpring(scale) }]
     };
   });
 
@@ -96,10 +94,31 @@ function PaginationDot({ index, scrollX }: { index: number; scrollX: SharedValue
 }
 
 export default function OnboardingScreen() {
+  const { colors, isDark } = useAppTheme();
   const scrollViewRef = useRef<ScrollView>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollX = useSharedValue(0);
-  const buttonScale = useSharedValue(1);
+
+  const slides = React.useMemo(
+    (): OnboardingSlideData[] => [
+      {
+        title: "Logistique\nSans Faille",
+        description: "L'efficacité d'Uber au service d'une logistique de précision chirurgicale.",
+        image: onboardingImgs.logistics,
+      },
+      {
+        title: "Routage\nTactique",
+        description: "Des itinéraires optimisés en temps réel pour une navigation experte.",
+        image: onboardingImgs.navigation,
+      },
+      {
+        title: "Validation\nCertifiée",
+        description: "Une preuve de confiance absolue à chaque étape du manifest.",
+        image: onboardingImgs.validation,
+      },
+    ],
+    []
+  );
 
   const handleScroll = (event: any) => {
     const offsetX = event.nativeEvent.contentOffset.x;
@@ -109,7 +128,7 @@ export default function OnboardingScreen() {
   };
 
   const handleNext = () => {
-    if (currentIndex < SLIDES.length - 1) {
+    if (currentIndex < slides.length - 1) {
       scrollViewRef.current?.scrollTo({
         x: width * (currentIndex + 1),
         animated: true,
@@ -124,69 +143,68 @@ export default function OnboardingScreen() {
   };
 
   const handleFinish = async () => {
-    buttonScale.value = withSpring(0.9, {}, () => {
-      buttonScale.value = withSpring(1);
-    });
-    
     await storageService.setOnboardingCompleted(true);
     router.replace("/login");
   };
 
-  const buttonAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: buttonScale.value }],
-  }));
-
   return (
     <View style={styles.container}>
-      <View style={styles.background}>
-        {/* Skip Button */}
-        {currentIndex < SLIDES.length - 1 && (
-          <Pressable style={styles.skipButton} onPress={handleSkip}>
-            <Text style={styles.skipText}>Passer</Text>
-          </Pressable>
-        )}
+      <StatusBar barStyle="light-content" />
 
-        {/* Slides */}
-        <ScrollView
-          ref={scrollViewRef}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          style={styles.scrollView}
+      {/* SKIP BUTTONLINK - White on transparent for high end feel */}
+      {currentIndex < slides.length - 1 && (
+        <Pressable
+          style={styles.skipButton}
+          onPress={handleSkip}
         >
-          {SLIDES.map((slide, index) => (
-            <OnboardingSlide key={index} {...slide} index={index} />
-          ))}
-        </ScrollView>
+          <Text style={styles.skipText}>PASSER</Text>
+        </Pressable>
+      )}
 
-        {/* Pagination Dots */}
-        <PaginationDots scrollX={scrollX} slides={SLIDES} />
+      <ScrollView
+        ref={scrollViewRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        decelerationRate="fast"
+      >
+        {slides.map((slide, index) => (
+          <OnboardingSlide
+            key={index}
+            {...slide}
+            index={index}
+            scrollX={scrollX}
+          />
+        ))}
+      </ScrollView>
 
-        {/* Next/Finish Button */}
-        <Animated.View style={[styles.buttonContainer, buttonAnimatedStyle]}>
-          <Pressable 
+      {/* FLOATING ACTION INTERFACE */}
+      <View style={styles.footer}>
+        <PaginationDots scrollX={scrollX} slides={slides} />
+
+        <View style={styles.buttonContainer}>
+          <Pressable
             style={({ pressed }) => [
               styles.button,
-              { opacity: pressed ? 0.9 : 1 }
-            ]} 
+              {
+                opacity: pressed ? 0.8 : 1,
+                backgroundColor: "#FFFFFF",
+              },
+            ]}
             onPress={handleNext}
           >
             <Text style={styles.buttonText}>
-              {currentIndex === SLIDES.length - 1 ? "Commencer" : "Suivant"}
+              {currentIndex === slides.length - 1 ? "Démarrer" : "Suivant"}
             </Text>
             <Ionicons
-              name={
-                currentIndex === SLIDES.length - 1
-                  ? "checkmark-circle"
-                  : "arrow-forward"
-              }
-              size={22}
-              color="#FFFFFF"
+              name="chevron-forward"
+              size={18}
+              color="#000000"
             />
           </Pressable>
-        </Animated.View>
+        </View>
       </View>
     </View>
   );
@@ -195,63 +213,56 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  background: {
-    flex: 1,
-    backgroundColor: "#F6F8FB",
+    backgroundColor: "#000",
   },
   skipButton: {
     position: "absolute",
     top: 60,
-    right: 24,
+    right: 28,
     zIndex: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: "rgba(22, 49, 79, 0.08)",
+    padding: 8,
   },
   skipText: {
-    color: "#16314f",
-    fontSize: 15,
-    fontWeight: "600",
+    fontSize: 10,
+    fontFamily: typography.fontFamily.black,
+    color: "#FFFFFF",
+    letterSpacing: 2,
   },
-  scrollView: {
-    flex: 1,
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingBottom: 60,
+    gap: 32,
   },
   paginationContainer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    gap: 6,
-    paddingBottom: 32,
+    gap: 12,
   },
   dot: {
+    width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#16314f",
+    backgroundColor: "#FFFFFF",
   },
   buttonContainer: {
-    paddingHorizontal: 32,
-    paddingBottom: 60,
+    paddingHorizontal: 40,
   },
   button: {
+    height: 64,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F36E18",
-    borderRadius: 14,
-    paddingVertical: 16,
-    gap: 8,
-    shadowColor: "#F36E18",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 6,
+    gap: 12,
   },
   buttonText: {
-    color: "#FFFFFF",
-    fontSize: 17,
-    fontWeight: "700",
-    letterSpacing: 0.3,
+    color: "#000000",
+    fontSize: 14,
+    fontFamily: typography.fontFamily.black,
+    letterSpacing: 2,
+    textTransform: "uppercase",
   },
 });

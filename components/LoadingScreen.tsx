@@ -1,6 +1,7 @@
 import React from "react";
-import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import { useAppTheme } from "@/hooks/useAppTheme";
+import { typography } from "@/constants/typography";
 
 interface LoadingScreenProps {
   message?: string;
@@ -8,9 +9,10 @@ interface LoadingScreenProps {
 
 export function LoadingScreen({ message = "Chargement..." }: LoadingScreenProps) {
   const { colors } = useAppTheme();
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ActivityIndicator size="large" color={colors.primary} />
+      <ActivityIndicator size="large" color={colors.text} />
       <Text style={[styles.text, { color: colors.textSecondary }]}>{message}</Text>
     </View>
   );
@@ -24,7 +26,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   text: {
-    fontSize: 15,
-    fontWeight: "500",
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.medium,
   },
 });

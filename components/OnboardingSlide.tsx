@@ -1,86 +1,160 @@
 import React from "react";
-import { View, Text, StyleSheet, Dimensions } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import Animated, { 
-  FadeIn,
-  ZoomIn,
+import { View, Text, StyleSheet, Dimensions, Image } from "react-native";
+import Animated, {
+  FadeInDown,
+  FadeInRight,
+  interpolate,
+  useAnimatedStyle,
+  SharedValue,
 } from "react-native-reanimated";
+import { typography } from "@/constants/typography";
 
-const { width } = Dimensions.get("window");
+const { width, height } = Dimensions.get("window");
 
 interface OnboardingSlideProps {
-  icon: keyof typeof Ionicons.glyphMap;
   title: string;
   description: string;
-  color: string;
-  accentColor: string;
+  image: any;
   index: number;
+  scrollX: SharedValue<number>;
 }
 
 export function OnboardingSlide({
-  icon,
   title,
   description,
-  color,
-  accentColor,
+  image,
   index,
+  scrollX,
 }: OnboardingSlideProps) {
-  return (
-    <View style={[styles.slide, { width }]}>
-      <Animated.View
-        entering={ZoomIn.delay(index * 150).duration(600).springify()}
-        style={[styles.iconContainer, { backgroundColor: accentColor }]}
-      >
-        <Ionicons name={icon} size={80} color="#FFFFFF" />
-      </Animated.View>
 
-      <Animated.View
-        entering={FadeIn.delay(index * 150 + 300).duration(500)}
-        style={styles.textContainer}
-      >
-        <Text style={[styles.title, { color }]}>{title}</Text>
-        <Text style={[styles.description, { color }]}>{description}</Text>
-      </Animated.View>
+  const imageStyle = useAnimatedStyle(() => {
+    const scale = interpolate(
+      scrollX.value,
+      [(index - 1) * width, index * width, (index + 1) * width],
+      [1.2, 1, 1.2]
+    );
+    return {
+      transform: [{ scale }],
+    };
+  });
+
+  const overlayStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      scrollX.value,
+      [(index - 1) * width, index * width, (index + 1) * width],
+      [0.8, 0.4, 0.8]
+    );
+    return { opacity };
+  });
+
+  return (
+    <View style={[styles.slide, { width, height }]}>
+      {/* BACKGROUND IMAGE - Cinematic & Creative */}
+      <View style={StyleSheet.absoluteFill}>
+        <Animated.Image
+          source={image}
+          style={[styles.backgroundImage, imageStyle]}
+          resizeMode="cover"
+        />
+        <Animated.View style={[styles.overlay, overlayStyle]} />
+      </View>
+
+      {/* CONTENT OVERLAY - High Contrast & Sharp */}
+      <View style={styles.contentContainer}>
+        <Animated.View
+          entering={FadeInRight.delay(200).duration(800).springify()}
+          style={styles.headerBlock}
+        >
+          <View style={styles.idLine} />
+          <Text style={styles.indexText}>MAPPING_SEQUENCE_0{index + 1}</Text>
+        </Animated.View>
+
+        <Animated.View
+          entering={FadeInDown.delay(400).duration(800).springify()}
+          style={styles.textBlock}
+        >
+          <Text style={styles.title}>{title.toUpperCase()}</Text>
+          <Text style={styles.description}>{description}</Text>
+        </Animated.View>
+
+        {/* Decorative Sharp Corners */}
+        <View style={styles.cornerMarkerLU} />
+        <View style={styles.cornerMarkerRD} />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   slide: {
+    overflow: "hidden",
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#000',
+  },
+  contentContainer: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-end",
     paddingHorizontal: 32,
-    gap: 56,
+    paddingBottom: 160,
+    gap: 32,
   },
-  iconContainer: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  textContainer: {
-    alignItems: "center",
+  headerBlock: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
   },
+  idLine: {
+    width: 32,
+    height: 2,
+    backgroundColor: '#FFF',
+  },
+  indexText: {
+    color: '#FFF',
+    fontSize: 10,
+    fontFamily: typography.fontFamily.black,
+    letterSpacing: 3,
+  },
+  textBlock: {
+    gap: 16,
+  },
   title: {
-    fontSize: 28,
-    fontWeight: "700",
-    textAlign: "center",
-    letterSpacing: -0.3,
+    color: '#FFF',
+    fontSize: 40,
+    fontFamily: typography.fontFamily.black,
+    lineHeight: 42,
+    letterSpacing: -1,
   },
   description: {
+    color: 'rgba(255,255,255,0.7)',
     fontSize: 16,
-    fontWeight: "400",
-    textAlign: "center",
+    fontFamily: typography.fontFamily.medium,
     lineHeight: 24,
     maxWidth: 280,
-    opacity: 0.75,
   },
+  cornerMarkerLU: {
+    position: 'absolute',
+    top: 60,
+    left: 24,
+    width: 20,
+    height: 20,
+    borderLeftWidth: 1,
+    borderTopWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  cornerMarkerRD: {
+    position: 'absolute',
+    bottom: 40,
+    right: 24,
+    width: 20,
+    height: 20,
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  }
 });

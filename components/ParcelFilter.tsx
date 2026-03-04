@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 import { useAppTheme } from "@/hooks/useAppTheme";
+import { typography } from "@/constants/typography";
 
 export type FilterType = "all" | "delivered" | "pending" | "failed";
 
@@ -15,15 +16,15 @@ interface ParcelFilterProps {
   };
 }
 
-export function ParcelFilter({ activeFilter, onFilterChange, counts }: ParcelFilterProps) {
-  const { colors } = useAppTheme();
+const filters: { key: FilterType; label: string }[] = [
+  { key: "all", label: "TOUT" },
+  { key: "delivered", label: "LIVRÉS" },
+  { key: "pending", label: "ATTENTE" },
+  { key: "failed", label: "ÉCHECS" },
+];
 
-  const filters: { key: FilterType; label: string }[] = [
-    { key: "all", label: "Tous" },
-    { key: "delivered", label: "Livrés" },
-    { key: "pending", label: "En attente" },
-    { key: "failed", label: "Incidents" },
-  ];
+export function ParcelFilter({ activeFilter, onFilterChange, counts }: ParcelFilterProps) {
+  const { colors, isDark } = useAppTheme();
 
   return (
     <ScrollView
@@ -31,52 +32,44 @@ export function ParcelFilter({ activeFilter, onFilterChange, counts }: ParcelFil
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.container}
     >
-      {filters.map((filter) => {
-        const isActive = activeFilter === filter.key;
-        const count = counts?.[filter.key];
+      {filters.map((f) => {
+        const isActive = activeFilter === f.key;
+        const count = counts?.[f.key];
 
         return (
           <Pressable
-            key={filter.key}
-            onPress={() => onFilterChange(filter.key)}
-            style={({ pressed }) => [
-              styles.filterButton,
+            key={f.key}
+            onPress={() => onFilterChange(f.key)}
+            style={[
+              styles.tab,
               {
-                backgroundColor: isActive ? colors.primary : colors.surface,
-                borderColor: isActive ? colors.primary : colors.borderLight,
-                transform: [{ scale: pressed ? 0.96 : 1 }],
+                borderBottomColor: isActive ? colors.accent : "transparent",
+                backgroundColor: isActive ? (isDark ? "#121212" : "#F9F9F9") : "transparent",
               },
             ]}
           >
-            <Text
-              style={[
-                styles.filterText,
-                { color: isActive ? "#FFFFFF" : colors.text },
-              ]}
-            >
-              {filter.label}
-            </Text>
-            {count !== undefined && (
-              <View
+            <View style={styles.tabContent}>
+              <Text
                 style={[
-                  styles.badge,
-                  {
-                    backgroundColor: isActive
-                      ? "rgba(255, 255, 255, 0.25)"
-                      : colors.background,
-                  },
+                  styles.tabLabel,
+                  { color: isActive ? colors.text : colors.textTertiary },
                 ]}
               >
-                <Text
-                  style={[
-                    styles.badgeText,
-                    { color: isActive ? "#FFFFFF" : colors.textSecondary },
-                  ]}
-                >
-                  {count}
-                </Text>
-              </View>
-            )}
+                {f.label}
+              </Text>
+              {count !== undefined && (
+                <View style={[styles.countBadge, { backgroundColor: isActive ? colors.text : (isDark ? "#222" : "#EEE") }]}>
+                  <Text
+                    style={[
+                      styles.countText,
+                      { color: isActive ? colors.background : colors.textSecondary },
+                    ]}
+                  >
+                    {count}
+                  </Text>
+                </View>
+              )}
+            </View>
           </Pressable>
         );
       })}
@@ -86,33 +79,31 @@ export function ParcelFilter({ activeFilter, onFilterChange, counts }: ParcelFil
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 10,
+    paddingHorizontal: 24,
+    gap: 0,
+    paddingVertical: 0,
   },
-  filterButton: {
+  tab: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 3,
+  },
+  tabContent: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1.5,
     gap: 8,
   },
-  filterText: {
-    fontSize: 14,
-    fontWeight: "700",
+  tabLabel: {
+    fontSize: 10,
+    fontFamily: typography.fontFamily.black,
+    letterSpacing: 1.5,
   },
-  badge: {
-    minWidth: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
+  countBadge: {
     paddingHorizontal: 6,
+    paddingVertical: 1,
   },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: "700",
+  countText: {
+    fontSize: 9,
+    fontFamily: typography.fontFamily.black,
   },
 });
