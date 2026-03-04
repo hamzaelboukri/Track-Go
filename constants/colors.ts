@@ -1,57 +1,118 @@
+/**
+ * KoliGo Design System — Uber-Inspired Color Palette
+ *
+ * Pure Uber DNA: Black primary, white contrast, green for success.
+ * High-contrast, bold, minimal. Black is the brand.
+ */
+
 const Colors = {
   light: {
-    primary: "#16314f",
-    primaryLight: "#2b5a86",
-    accent: "#F36E18",
-    accentLight: "#F79A40",
-    success: "#27B961",
-    warning: "#E8BE07",
-    danger: "#DE4238",
-    info: "#2F86D1",
-    background: "#F6F8FB",
+    // Brand — Pure Uber black
+    primary: "#000000",
+    primaryLight: "#333333",
+
+    // Accent — Uber Green (success/delivery)
+    accent: "#06C167",
+    accentLight: "#2ED47A",
+
+    // Warm accent — for urgency
+    accentWarm: "#FF6B00",
+    accentWarmLight: "#FF8A3D",
+
+    // Semantic
+    success: "#06C167",
+    warning: "#F5A623",
+    danger: "#E11900",
+    info: "#276EF1",
+
+    // Backgrounds — Uber whites
+    background: "#FFFFFF",
     surface: "#FFFFFF",
-    surfaceSecondary: "#F0F4FA",
-    text: "#161825",
-    textSecondary: "#6A7786",
-    textTertiary: "#98A6B4",
-    border: "#E6EDF6",
-    borderLight: "#F5F8FB",
-    tint: "#1B3A5C",
-    tabIconDefault: "#9EAAB8",
-    tabIconSelected: "#1B3A5C",
-    statusPending: "#F27B20",
-    statusDelivered: "#2ECC71",
-    statusFailed: "#E74C3C",
-    statusInProgress: "#3498DB",
-    overlay: "rgba(0, 0, 0, 0.45)",
-    shadow: "rgba(22, 49, 79, 0.09)",
+    surfaceSecondary: "#F6F6F6",
+    surfaceElevated: "#FFFFFF",
+
+    // Text
+    text: "#000000",
+    textSecondary: "#545454",
+    textTertiary: "#AFAFAF",
+
+    // Borders
+    border: "#E2E2E2",
+    borderLight: "#F0F0F0",
+
+    // Navigation
+    tint: "#000000",
+    tabIconDefault: "#AFAFAF",
+    tabIconSelected: "#000000",
+
+    // Status
+    statusPending: "#F5A623",
+    statusDelivered: "#06C167",
+    statusFailed: "#E11900",
+    statusInProgress: "#276EF1",
+
+    // Effects
+    overlay: "rgba(0, 0, 0, 0.04)",
+    shadow: "rgba(0, 0, 0, 0.08)",
+    shadowMedium: "rgba(0, 0, 0, 0.14)",
+
+    // Gradients
+    gradientStart: "#000000",
+    gradientEnd: "#1A1A2E",
   },
   dark: {
-    primary: "#63A5E8",
-    primaryLight: "#81BEF4",
-    accent: "#F6A54C",
-    accentLight: "#F8BF70",
-    success: "#28C46A",
-    warning: "#E6C70C",
-    danger: "#E04B40",
-    info: "#6FB6EA",
-    background: "#0B0F14",
-    surface: "#14181D",
-    surfaceSecondary: "#1E2328",
-    text: "#E9F2FA",
-    textSecondary: "#8A93A0",
-    textTertiary: "#6B7380",
-    border: "#2B3136",
-    borderLight: "#1E2328",
-    tint: "#4A9EE5",
-    tabIconDefault: "#6E7681",
-    tabIconSelected: "#4A9EE5",
-    statusPending: "#F5993D",
-    statusDelivered: "#2ECC71",
-    statusFailed: "#E74C3C",
-    statusInProgress: "#5DADE2",
-    overlay: "rgba(0, 0, 0, 0.72)",
-    shadow: "rgba(0, 0, 0, 0.32)",
+    // Brand
+    primary: "#FFFFFF",
+    primaryLight: "#E5E5E5",
+
+    // Accent
+    accent: "#06C167",
+    accentLight: "#2ED47A",
+
+    // Warm accent
+    accentWarm: "#FF8A3D",
+    accentWarmLight: "#FFAD6E",
+
+    // Semantic
+    success: "#06C167",
+    warning: "#FFC043",
+    danger: "#FF4D4F",
+    info: "#5B91F5",
+
+    // Backgrounds — Uber deep dark
+    background: "#000000",
+    surface: "#141414",
+    surfaceSecondary: "#1F1F1F",
+    surfaceElevated: "#1F1F1F",
+
+    // Text
+    text: "#FFFFFF",
+    textSecondary: "#B0B0B0",
+    textTertiary: "#6B6B6B",
+
+    // Borders
+    border: "rgba(255, 255, 255, 0.12)",
+    borderLight: "rgba(255, 255, 255, 0.06)",
+
+    // Navigation
+    tint: "#FFFFFF",
+    tabIconDefault: "#6B6B6B",
+    tabIconSelected: "#FFFFFF",
+
+    // Status
+    statusPending: "#FFC043",
+    statusDelivered: "#06C167",
+    statusFailed: "#FF4D4F",
+    statusInProgress: "#5B91F5",
+
+    // Effects
+    overlay: "rgba(0, 0, 0, 0.6)",
+    shadow: "rgba(0, 0, 0, 0.4)",
+    shadowMedium: "rgba(0, 0, 0, 0.5)",
+
+    // Gradients
+    gradientStart: "#1A1A2E",
+    gradientEnd: "#000000",
   },
 };
 
