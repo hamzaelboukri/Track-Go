@@ -173,6 +173,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return res.json(tour);
   });
 
+  app.post("/api/location/track", (req: Request, res: Response) => {
+    const { latitude, longitude, accuracy, altitude, heading, speed, timestamp } = req.body;
+    
+    if (!latitude || !longitude) {
+      return res.status(400).json({ message: "Latitude et longitude requises" });
+    }
+
+    console.log('[Location Track]', {
+      lat: latitude.toFixed(6),
+      lng: longitude.toFixed(6),
+      accuracy: accuracy ? `${accuracy.toFixed(1)}m` : 'N/A',
+      speed: speed ? `${(speed * 3.6).toFixed(1)} km/h` : 'N/A',
+      time: new Date(timestamp).toLocaleTimeString('fr-FR'),
+    });
+
+    return res.json({ 
+      success: true, 
+      message: 'Position enregistrée',
+      timestamp: new Date().toISOString(),
+    });
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

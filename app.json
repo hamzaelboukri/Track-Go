@@ -15,7 +15,12 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.myapp"
+      "bundleIdentifier": "com.myapp",
+      "infoPlist": {
+        "UIBackgroundModes": ["location"],
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "KoliGo suit votre position en arrière-plan pendant votre tournée pour maintenir une visibilité en temps réel et optimiser les livraisons.",
+        "NSLocationWhenInUseUsageDescription": "KoliGo a besoin de votre position pour afficher votre localisation sur la carte et valider les livraisons."
+      }
     },
     "android": {
       "package": "com.myapp",
@@ -24,7 +29,14 @@
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
-      }
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
@@ -32,7 +44,17 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "KoliGo suit votre position en arrière-plan pendant votre tournée.",
+          "locationAlwaysPermission": "KoliGo suit votre position en arrière-plan pendant votre tournée.",
+          "locationWhenInUsePermission": "KoliGo a besoin de votre position pour les livraisons.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isIosBackgroundLocationEnabled": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

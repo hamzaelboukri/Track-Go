@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Pressable, ScrollView, Platform, Alert } from "react-native";
+import { View, Text, StyleSheet, Pressable, ScrollView, Platform, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -7,13 +7,15 @@ import { router } from "expo-router";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTournee } from "@/contexts/TourneeContext";
+import { typography } from "@/constants/typography";
+import { BackgroundTrackingControl } from "@/components/BackgroundTrackingControl";
 
 export default function ProfileScreen() {
-  const { colors } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { driver, logout } = useAuth();
   const { stats } = useTournee();
-  const webTopInset = Platform.OS === "web" ? 67 : 0;
+  const webTopInset = Platform.select({ web: 67, default: 0 });
 
   async function handleLogout() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -24,179 +26,214 @@ export default function ProfileScreen() {
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={{ paddingTop: insets.top + webTopInset + 8, paddingBottom: insets.bottom + 100 }}
+      contentContainerStyle={{ paddingTop: insets.top + webTopInset, paddingBottom: insets.bottom + 100 }}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.header}>
-        <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-          <Text style={styles.avatarText}>
+      {/* ─── PROFESSIONAL IDENTITY BLOCK ─── */}
+      <View style={styles.identitySection}>
+        <View style={[styles.avatarBox, { borderColor: isDark ? colors.text : "#000" }]}>
+          <Text style={[styles.avatarText, { color: isDark ? colors.text : "#000" }]}>
             {driver?.firstName?.[0]}{driver?.lastName?.[0]}
           </Text>
         </View>
-        <Text style={[styles.name, { color: colors.text }]}>
-          {driver?.firstName} {driver?.lastName}
-        </Text>
-        <Text style={[styles.employeeId, { color: colors.textSecondary }]}>
-          {driver?.employeeId}
-        </Text>
-      </View>
-
-      <View style={[styles.infoSection, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
-        <InfoRow icon="call-outline" label="Telephone" value={driver?.phone || "-"} colors={colors} />
-        <View style={[styles.separator, { backgroundColor: colors.borderLight }]} />
-        <InfoRow icon="car-outline" label="Vehicule" value={driver?.vehicleId || "-"} colors={colors} />
-      </View>
-
-      {stats && (
-        <View style={[styles.infoSection, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Aujourd'hui</Text>
-          <View style={styles.statsGrid}>
-            <StatCard label="Livres" value={stats.delivered} color={colors.success} bgColor={colors.success + "15"} />
-            <StatCard label="Echecs" value={stats.failed} color={colors.danger} bgColor={colors.danger + "15"} />
-            <StatCard label="Restants" value={stats.pending + stats.inProgress} color={colors.statusPending} bgColor={colors.statusPending + "15"} />
-            <StatCard label="Taux" value={`${stats.progressPercent}%`} color={colors.primary} bgColor={colors.primary + "15"} />
-          </View>
+        <View style={styles.identityDetails}>
+          <Text style={[styles.driverTag, { color: colors.accent, backgroundColor: colors.accent + "15" }]}>PROFESSIONNEL VÉRIFIÉ</Text>
+          <Text style={[styles.nameText, { color: colors.text }]}>{driver?.firstName} {driver?.lastName}</Text>
+          <Text style={[styles.idText, { color: colors.textSecondary }]}>MATRICULE: {driver?.employeeId}</Text>
         </View>
-      )}
+      </View>
 
-      <Pressable
-        onPress={handleLogout}
-        style={({ pressed }) => [
-          styles.logoutButton,
-          {
-            backgroundColor: colors.danger + "12",
-            borderColor: colors.danger + "30",
-            opacity: pressed ? 0.8 : 1,
-          },
-        ]}
-      >
-        <Ionicons name="log-out-outline" size={20} color={colors.danger} />
-        <Text style={[styles.logoutText, { color: colors.danger }]}>Se deconnecter</Text>
-      </Pressable>
+      {/* ─── PERFORMANCE METRICS ─── */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.textTertiary }]}>METRIQUES DE PERFORMANCE</Text>
+          <View style={[styles.liveDot, { backgroundColor: colors.success }]} />
+        </View>
+        <View style={styles.metricsWrapper}>
+          <MetricItem label="LIVRAISONS" value={stats?.delivered || 0} color={colors.text} />
+          <View style={[styles.verticalDivider, { backgroundColor: colors.border }]} />
+          <MetricItem label="EFFICACITÉ" value={`${stats?.progressPercent || 0}%`} color={colors.accent} />
+        </View>
+      </View>
+
+      {/* ─── DATA GRID ─── */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.textTertiary }]}>DONNÉES VÉHICULE & CONTACT</Text>
+        <View style={styles.dataGrid}>
+          <DataCard label="VÉHICULE" value={driver?.vehicleId || "—"} icon="car" colors={colors} isDark={isDark} />
+          <DataCard label="CONTACT" value={driver?.phone || "—"} icon="call" colors={colors} isDark={isDark} />
+        </View>
+      </View>
+
+      {/* ─── BACKGROUND TRACKING ─── */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.textTertiary }]}>SUIVI POSITION</Text>
+        <BackgroundTrackingControl />
+      </View>
+
+      {/* ─── ACTIONS ─── */}
+      <View style={styles.actionSection}>
+        <Pressable
+          onPress={handleLogout}
+          style={({ pressed }) => [
+            styles.logoutBtn,
+            { backgroundColor: isDark ? "#141414" : "#F6F6F6", opacity: pressed ? 0.7 : 1 }
+          ]}
+        >
+          <Ionicons name="log-out-outline" size={20} color={colors.danger} />
+          <Text style={[styles.logoutText, { color: colors.danger }]}>DÉCONNEXION DE LA SESSION</Text>
+        </Pressable>
+        <Text style={[styles.versionText, { color: colors.textTertiary }]}>KOLIGO LOGISTICS V1.0.4</Text>
+      </View>
     </ScrollView>
   );
 }
 
-function InfoRow({ icon, label, value, colors }: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  value: string;
-  colors: any;
-}) {
+function MetricItem({ label, value, color }: { label: string; value: string | number; color: string }) {
   return (
-    <View style={styles.infoRow}>
-      <Ionicons name={icon} size={20} color={colors.textTertiary} />
-      <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{label}</Text>
-      <Text style={[styles.infoValue, { color: colors.text }]}>{value}</Text>
+    <View style={styles.metricItem}>
+      <Text style={[styles.metricValue, { color }]}>{value}</Text>
+      <Text style={[styles.metricLabel, { color: "#666" }]}>{label}</Text>
     </View>
   );
 }
 
-function StatCard({ label, value, color, bgColor }: {
-  label: string;
-  value: number | string;
-  color: string;
-  bgColor: string;
-}) {
+function DataCard({ label, value, icon, colors, isDark }: { label: string; value: string; icon: any; colors: any; isDark: boolean }) {
   return (
-    <View style={[styles.statCard, { backgroundColor: bgColor }]}>
-      <Text style={[styles.statValue, { color }]}>{value}</Text>
-      <Text style={[styles.statLabel, { color }]}>{label}</Text>
+    <View style={[styles.dataCard, { backgroundColor: isDark ? "#121212" : "#F6F6F6" }]}>
+      <Ionicons name={icon} size={20} color={colors.textTertiary} />
+      <View>
+        <Text style={[styles.dataLabel, { color: colors.textTertiary }]}>{label}</Text>
+        <Text style={[styles.dataValue, { color: colors.text }]}>{value}</Text>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
+  container: { flex: 1 },
+  identitySection: {
+    paddingHorizontal: 32,
+    marginTop: 40,
+    flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 24,
-    gap: 6,
+    gap: 20,
   },
-  avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+  avatarBox: {
+    width: 80,
+    height: 80,
+    borderWidth: 2,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 8,
   },
   avatarText: {
-    color: "#fff",
-    fontSize: 26,
-    fontWeight: "800",
+    fontSize: 28,
+    fontFamily: typography.fontFamily.black,
   },
-  name: {
-    fontSize: 22,
-    fontWeight: "800",
+  identityDetails: { gap: 4 },
+  driverTag: {
+    fontSize: 9,
+    fontFamily: typography.fontFamily.black,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignSelf: "flex-start",
+    letterSpacing: 1,
   },
-  employeeId: {
-    fontSize: 14,
-    fontWeight: "500",
+  nameText: {
+    fontSize: 24,
+    fontFamily: typography.fontFamily.black,
+    letterSpacing: -0.5,
   },
-  infoSection: {
-    marginHorizontal: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 16,
-    marginBottom: 12,
-    gap: 12,
+  idText: {
+    fontSize: 11,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: 1,
+  },
+  section: {
+    paddingHorizontal: 32,
+    marginTop: 48,
+    gap: 16,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 11,
+    fontFamily: typography.fontFamily.black,
+    letterSpacing: 2,
   },
-  infoRow: {
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  metricsWrapper: {
     flexDirection: "row",
+    borderWidth: 1,
+    borderColor: "#EEE",
+    paddingVertical: 24,
     alignItems: "center",
+  },
+  metricItem: {
+    flex: 1,
+    alignItems: "center",
+    gap: 4,
+  },
+  metricValue: {
+    fontSize: 32,
+    fontFamily: typography.fontFamily.black,
+  },
+  metricLabel: {
+    fontSize: 10,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: 1,
+  },
+  verticalDivider: {
+    width: 1,
+    height: 40,
+  },
+  dataGrid: {
+    flexDirection: "row",
     gap: 12,
   },
-  infoLabel: {
-    fontSize: 14,
-    fontWeight: "500",
+  dataCard: {
     flex: 1,
+    padding: 20,
+    gap: 12,
   },
-  infoValue: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  separator: {
-    height: 1,
-  },
-  statsGrid: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  statCard: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: 12,
-    borderRadius: 10,
-    gap: 2,
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: "800",
-  },
-  statLabel: {
+  dataLabel: {
     fontSize: 10,
-    fontWeight: "600",
+    fontFamily: typography.fontFamily.black,
+    letterSpacing: 1,
   },
-  logoutButton: {
+  dataValue: {
+    fontSize: 15,
+    fontFamily: typography.fontFamily.bold,
+  },
+  actionSection: {
+    marginTop: 64,
+    paddingHorizontal: 32,
+    gap: 20,
+    alignItems: "center",
+  },
+  logoutBtn: {
+    width: "100%",
+    height: 60,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 8,
-    marginTop: 8,
+    gap: 12,
   },
   logoutText: {
-    fontSize: 15,
-    fontWeight: "600",
+    fontSize: 12,
+    fontFamily: typography.fontFamily.black,
+    letterSpacing: 1,
   },
+  versionText: {
+    fontSize: 9,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: 2,
+  }
 });
