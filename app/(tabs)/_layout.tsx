@@ -38,28 +38,35 @@ function ClassicTabLayout() {
   const colors = isDark ? Colors.dark : Colors.light;
   const isWeb = Platform.OS === "web";
   const isIOS = Platform.OS === "ios";
-  const safeAreaInsets = useSafeAreaInsets();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
+        tabBarActiveTintColor: colors.tint,
         tabBarInactiveTintColor: colors.tabIconDefault,
         tabBarStyle: {
           position: "absolute",
-          backgroundColor: isIOS ? "transparent" : colors.surface,
-          borderTopWidth: isWeb ? 1 : 0,
-          borderTopColor: colors.border,
+          backgroundColor: isIOS ? "transparent" : colors.background,
+          borderTopWidth: isDark ? 0.5 : 0,
+          borderTopColor: isDark ? colors.border : "transparent",
           elevation: 0,
           ...(isWeb ? { height: 84 } : {}),
-          paddingBottom: safeAreaInsets.bottom,
+          paddingBottom: insets.bottom,
+          // Uber: no shadow in dark, subtle in light
+          ...(!isDark && Platform.OS !== "android" ? {
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: -1 },
+            shadowOpacity: 0.04,
+            shadowRadius: 6,
+          } : {}),
         },
         tabBarBackground: () =>
           isIOS ? (
             <BlurView intensity={100} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
           ) : isWeb ? (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surface }]} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]} />
           ) : null,
         tabBarLabelStyle: {
           fontSize: 11,
@@ -71,28 +78,36 @@ function ClassicTabLayout() {
         name="index"
         options={{
           title: "Tournee",
-          tabBarIcon: ({ color, size }) => <Ionicons name="list" size={size} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "list" : "list-outline"} size={22} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="map"
         options={{
           title: "Carte",
-          tabBarIcon: ({ color, size }) => <Ionicons name="map-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "map" : "map-outline"} size={22} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="scan"
         options={{
           title: "Scanner",
-          tabBarIcon: ({ color, size }) => <Ionicons name="scan-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "scan" : "scan-outline"} size={22} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profil",
-          tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "person" : "person-outline"} size={22} color={color} />
+          ),
         }}
       />
     </Tabs>

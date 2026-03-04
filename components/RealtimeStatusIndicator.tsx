@@ -8,10 +8,11 @@ import Animated, {
   withSequence,
   withTiming,
   withSpring,
-  FadeInDown,
-  FadeOutUp,
+  FadeIn,
+  FadeOut,
 } from "react-native-reanimated";
 import { useAppTheme } from "@/hooks/useAppTheme";
+import { typography } from "@/constants/typography";
 
 export interface RealtimeStatusIndicatorProps {
   isOffline: boolean;
@@ -24,96 +25,56 @@ export function RealtimeStatusIndicatorBase({
   isRefreshing,
   lastUpdate,
 }: RealtimeStatusIndicatorProps) {
-  const { colors } = useAppTheme();
-  const pulseScale = useSharedValue(1);
-  const syncRotation = useSharedValue(0);
+  const { colors, isDark } = useAppTheme();
+  const pulse = useSharedValue(1);
+  const rotation = useSharedValue(0);
 
   useEffect(() => {
     if (isRefreshing) {
-      syncRotation.value = withRepeat(
-        withTiming(360, { duration: 1000 }),
-        -1,
-        false
-      );
+      rotation.value = withRepeat(withTiming(360, { duration: 1000 }), -1, false);
     } else {
-      syncRotation.value = withTiming(0, { duration: 300 });
+      rotation.value = withTiming(0, { duration: 300 });
     }
-  }, [isRefreshing, syncRotation]);
+  }, [isRefreshing, rotation]);
 
   useEffect(() => {
     if (!isOffline && !isRefreshing) {
-      pulseScale.value = withSequence(
-        withSpring(1.2, { damping: 2, stiffness: 100 }),
-        withSpring(1, { damping: 2, stiffness: 100 })
+      pulse.value = withSequence(
+        withSpring(1.3, { damping: 4 }),
+        withSpring(1, { damping: 4 })
       );
     }
-  }, [isOffline, isRefreshing, pulseScale]);
+  }, [isOffline, isRefreshing, pulse]);
 
-  const syncAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${syncRotation.value}deg` }],
+  const rotStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
+  }));
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulse.value }],
   }));
 
-  const pulseAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }],
-  }));
-
-  const getStatusConfig = () => {
-    if (isRefreshing) {
-      return {
-        icon: "sync" as const,
-        color: colors.primary,
-        bgColor: colors.primary + "15",
-        text: "Synchronisation...",
-      };
-    }
-    if (isOffline) {
-      return {
-        icon: "cloud-offline" as const,
-        color: colors.statusPending,
-        bgColor: colors.statusPending + "15",
-        text: "Mode hors-ligne",
-      };
-    }
-    return {
-      icon: "cloud-done" as const,
-      color: colors.success,
-      bgColor: colors.success + "15",
-      text: "En ligne",
-    };
+  const getCfg = () => {
+    if (isRefreshing) return { icon: "sync" as const, color: colors.info, text: "Sync..." };
+    if (isOffline) return { icon: "cloud-offline" as const, color: colors.warning, text: "Hors-ligne" };
+    return { icon: "wifi" as const, color: colors.success, text: "En ligne" };
   };
 
-  const config = getStatusConfig();
-  const formattedTime = lastUpdate
-    ? new Date(lastUpdate).toLocaleTimeString("fr-FR", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : null;
+  const cfg = getCfg();
+  const time = lastUpdate ? new Date(lastUpdate).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : null;
 
   return (
     <Animated.View
-      entering={FadeInDown.springify()}
-      exiting={FadeOutUp.springify()}
-      style={[styles.container, { backgroundColor: config.bgColor }]}
+      entering={FadeIn}
+      exiting={FadeOut}
+      style={[styles.container, { backgroundColor: isDark ? "#141414" : "#F6F6F6" }]}
     >
-      <Animated.View
-        style={[
-          styles.iconContainer,
-          isRefreshing ? syncAnimatedStyle : pulseAnimatedStyle,
-        ]}
-      >
-        <Ionicons name={config.icon} size={14} color={config.color} />
+      <Animated.View style={isRefreshing ? rotStyle : pulseStyle}>
+        <View style={[styles.dot, { backgroundColor: cfg.color }]} />
       </Animated.View>
-      <View style={styles.textContainer}>
-        <Text style={[styles.statusText, { color: config.color }]}>
-          {config.text}
-        </Text>
-        {formattedTime && !isRefreshing && (
-          <Text style={[styles.timeText, { color: colors.textTertiary }]}>
-            · Mis à jour à {formattedTime}
-          </Text>
-        )}
-      </View>
+      <Text style={[styles.text, { color: cfg.color }]}>{cfg.text}</Text>
+      {time && !isRefreshing && (
+        <Text style={[styles.time, { color: colors.textTertiary }]}>· {time}</Text>
+      )}
     </Animated.View>
   );
 }
@@ -124,30 +85,23 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
     gap: 8,
-    marginHorizontal: 16,
+    marginHorizontal: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
   },
-  iconContainer: {
-    width: 20,
-    height: 20,
-    alignItems: "center",
-    justifyContent: "center",
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
-  textContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
+  text: {
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.bold,
   },
-  statusText: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  timeText: {
-    fontSize: 12,
-    fontWeight: "500",
-    marginLeft: 4,
+  time: {
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.medium,
   },
 });

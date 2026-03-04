@@ -1,57 +1,118 @@
+/**
+ * KoliGo Design System — Uber-Inspired Color Palette
+ *
+ * Pure Uber DNA: Black primary, white contrast, green for success.
+ * High-contrast, bold, minimal. Black is the brand.
+ */
+
 const Colors = {
   light: {
-    primary: "#1458FF",
-    primaryLight: "#4C7CFF",
-    accent: "#FF7B3A",
-    accentLight: "#FFAC6A",
-    success: "#35D48C",
-    warning: "#F4C542",
-    danger: "#FF4B5C",
-    info: "#3AAEFF",
-    background: "#F4F7FB",
+    // Brand — Pure Uber black
+    primary: "#000000",
+    primaryLight: "#333333",
+
+    // Accent — Uber Green (success/delivery)
+    accent: "#06C167",
+    accentLight: "#2ED47A",
+
+    // Warm accent — for urgency
+    accentWarm: "#FF6B00",
+    accentWarmLight: "#FF8A3D",
+
+    // Semantic
+    success: "#06C167",
+    warning: "#F5A623",
+    danger: "#E11900",
+    info: "#276EF1",
+
+    // Backgrounds — Uber whites
+    background: "#FFFFFF",
     surface: "#FFFFFF",
-    surfaceSecondary: "#E6EEFA",
-    text: "#0E1726",
-    textSecondary: "#5B6474",
-    textTertiary: "#9AA3B5",
-    border: "#D5E0F0",
-    borderLight: "#ECF1FA",
-    tint: "#1458FF",
-    tabIconDefault: "#A0A9BA",
-    tabIconSelected: "#1458FF",
-    statusPending: "#FFB020",
-    statusDelivered: "#1AD38A",
-    statusFailed: "#FF4B5C",
-    statusInProgress: "#3AAEFF",
-    overlay: "rgba(10, 22, 50, 0.08)",
-    shadow: "rgba(4, 20, 60, 0.10)",
+    surfaceSecondary: "#F6F6F6",
+    surfaceElevated: "#FFFFFF",
+
+    // Text
+    text: "#000000",
+    textSecondary: "#545454",
+    textTertiary: "#AFAFAF",
+
+    // Borders
+    border: "#E2E2E2",
+    borderLight: "#F0F0F0",
+
+    // Navigation
+    tint: "#000000",
+    tabIconDefault: "#AFAFAF",
+    tabIconSelected: "#000000",
+
+    // Status
+    statusPending: "#F5A623",
+    statusDelivered: "#06C167",
+    statusFailed: "#E11900",
+    statusInProgress: "#276EF1",
+
+    // Effects
+    overlay: "rgba(0, 0, 0, 0.04)",
+    shadow: "rgba(0, 0, 0, 0.08)",
+    shadowMedium: "rgba(0, 0, 0, 0.14)",
+
+    // Gradients
+    gradientStart: "#000000",
+    gradientEnd: "#1A1A2E",
   },
   dark: {
-    primary: "#4C8CFF",
-    primaryLight: "#6FA3FF",
-    accent: "#FF8E4D",
-    accentLight: "#FFB075",
-    success: "#3BE49C",
-    warning: "#FFCF5A",
-    danger: "#FF5C70",
-    info: "#4EC3FF",
-    background: "#050712",
-    surface: "rgba(10, 15, 30, 0.92)",
-    surfaceSecondary: "rgba(18, 26, 48, 0.96)",
-    text: "#F4F7FF",
-    textSecondary: "#A7B3CC",
-    textTertiary: "#6E7A92",
-    border: "rgba(96, 115, 150, 0.6)",
-    borderLight: "rgba(40, 60, 100, 0.85)",
-    tint: "#4C8CFF",
-    tabIconDefault: "#6E7A92",
-    tabIconSelected: "#4C8CFF",
-    statusPending: "#FFB347",
-    statusDelivered: "#32E29A",
-    statusFailed: "#FF5C70",
-    statusInProgress: "#4EC3FF",
-    overlay: "rgba(2, 6, 23, 0.78)",
-    shadow: "rgba(0, 0, 0, 0.55)",
+    // Brand
+    primary: "#FFFFFF",
+    primaryLight: "#E5E5E5",
+
+    // Accent
+    accent: "#06C167",
+    accentLight: "#2ED47A",
+
+    // Warm accent
+    accentWarm: "#FF8A3D",
+    accentWarmLight: "#FFAD6E",
+
+    // Semantic
+    success: "#06C167",
+    warning: "#FFC043",
+    danger: "#FF4D4F",
+    info: "#5B91F5",
+
+    // Backgrounds — Uber deep dark
+    background: "#000000",
+    surface: "#141414",
+    surfaceSecondary: "#1F1F1F",
+    surfaceElevated: "#1F1F1F",
+
+    // Text
+    text: "#FFFFFF",
+    textSecondary: "#B0B0B0",
+    textTertiary: "#6B6B6B",
+
+    // Borders
+    border: "rgba(255, 255, 255, 0.12)",
+    borderLight: "rgba(255, 255, 255, 0.06)",
+
+    // Navigation
+    tint: "#FFFFFF",
+    tabIconDefault: "#6B6B6B",
+    tabIconSelected: "#FFFFFF",
+
+    // Status
+    statusPending: "#FFC043",
+    statusDelivered: "#06C167",
+    statusFailed: "#FF4D4F",
+    statusInProgress: "#5B91F5",
+
+    // Effects
+    overlay: "rgba(0, 0, 0, 0.6)",
+    shadow: "rgba(0, 0, 0, 0.4)",
+    shadowMedium: "rgba(0, 0, 0, 0.5)",
+
+    // Gradients
+    gradientStart: "#1A1A2E",
+    gradientEnd: "#000000",
   },
 };
 
