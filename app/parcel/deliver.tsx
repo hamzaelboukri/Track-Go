@@ -10,7 +10,9 @@ import { useAppTheme } from "@/hooks/useAppTheme";
 import { useTournee } from "@/contexts/TourneeContext";
 import { typography } from "@/constants/typography";
 import { PhotoCapture } from "@/components/PhotoCapture";
+import { SignatureCapture } from "@/components/SignatureCapture";
 import type { PhotoResult } from "@/services/imageService";
+import type { SignatureResult } from "@/services/signatureService";
 import type { GeoCoordinates } from "../../shared/schema";
 
 export default function DeliverScreen() {
@@ -30,6 +32,7 @@ export default function DeliverScreen() {
   const [torchEnabled, setTorchEnabled] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [photo, setPhoto] = useState<PhotoResult | null>(null);
+  const [signature, setSignature] = useState<SignatureResult | null>(null);
 
   useEffect(() => {
     requestLocation();
@@ -66,6 +69,7 @@ export default function DeliverScreen() {
     if (!barcodeMatch) { Alert.alert("ERREUR", "CODE-BARRES NON VALIDE"); return; }
     if (!location) { Alert.alert("ERREUR", "POSITION GPS REQUISE"); return; }
     if (!photo) { Alert.alert("ERREUR", "PHOTO REQUISE"); return; }
+    if (!signature) { Alert.alert("ERREUR", "SIGNATURE REQUISE"); return; }
     setIsSubmitting(true);
     try {
       await deliverParcel(id, {
@@ -73,6 +77,7 @@ export default function DeliverScreen() {
         coordinates: location,
         timestamp: new Date().toISOString(),
         photoUri: photo.uri,
+        signatureUri: signature.base64,
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.dismiss(2);
@@ -217,18 +222,28 @@ export default function DeliverScreen() {
             disabled={!barcodeMatch}
           />
         </View>
+
+        {/* ─── SECTION 04: SIGNATURE CLIENT ─── */}
+        <View style={styles.section}>
+          {renderSectionHeader("04", "Signature Client")}
+          <SignatureCapture
+            onSignatureCaptured={(capturedSignature) => setSignature(capturedSignature)}
+            disabled={!barcodeMatch || !photo}
+            recipientName={parcel?.recipient.name}
+          />
+        </View>
       </ScrollView>
 
       {/* ─── VALIDATION TERMINAL ─── */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 24, backgroundColor: colors.background }]}>
         <Pressable
           onPress={handleConfirm}
-          disabled={!barcodeMatch || !location || !photo || isSubmitting}
+          disabled={!barcodeMatch || !location || !photo || !signature || isSubmitting}
           style={({ pressed }) => [
             styles.confirmBtn,
             {
-              backgroundColor: (barcodeMatch && location && photo) ? (isDark ? colors.text : "#000") : colors.border,
-              opacity: pressed ? 0.8 : (isSubmitting || !barcodeMatch || !location || !photo ? 0.2 : 1),
+              backgroundColor: (barcodeMatch && location && photo && signature) ? (isDark ? colors.text : "#000") : colors.border,
+              opacity: pressed ? 0.8 : (isSubmitting || !barcodeMatch || !location || !photo || !signature ? 0.2 : 1),
             }
           ]}
         >

@@ -220,6 +220,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  app.post("/api/upload/signature", (req: Request, res: Response) => {
+    // Note: Dans une vraie app, utiliser multer pour gérer multipart/form-data
+    // Pour le mock, on simule juste la réception
+    
+    const { parcelId, driverId, timestamp, signerName } = req.body;
+    
+    console.log('[Signature Upload]', {
+      parcelId,
+      driverId,
+      signerName,
+      timestamp: new Date(timestamp).toLocaleTimeString('fr-FR'),
+    });
+
+    // Simuler une URL de signature stockée
+    const signatureUrl = `https://storage.example.com/signatures/${parcelId}_${Date.now()}.png`;
+
+    return res.json({
+      success: true,
+      message: 'Signature uploadée avec succès',
+      signatureUrl,
+      timestamp: new Date().toISOString(),
+    });
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
