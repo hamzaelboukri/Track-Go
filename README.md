@@ -1,284 +1,254 @@
-# KoliGo - Application de gestion de livraison dernier kilometre
+# KoliGo
 
-## Overview
-KoliGo est une application mobile Expo React Native destinee aux livreurs de transport express pour la gestion du "dernier kilometre". L'app permet de gerer les tournees, scanner les colis, certifier les livraisons avec GPS, et signaler les incidents.
+## Contributors
+1. Abdelhakim Baalla  
+2. Hamza Elboukri (Scrum Master)  
+3. Ayoub Labit  
+4. Hamza Jaafar  
 
-## Architecture
+## Table of Contents
+1. [🚀 Project Overview](#project-overview)  
+2. [✨ Key Features](#key-features)  
+3. [🛠️ Technical Stack](#technical-stack)  
+4. [📂 Repository Structure](#repository-structure)  
+5. [⚙️ Installation & Setup](#installation--setup)  
+6. [▶️ Running the Application](#running-the-application)  
+7. [🔧 Development Workflow](#development-workflow)  
+8. [🔁 CI / CD (GitHub Actions)](#cicd-github-actions)  
+9. [🐳 Docker & Mock API](#docker--mock-api)  
+10. [🧪 Testing Strategy](#testing-strategy)  
+11. [🤝 Contributing](#contributing)  
+12. [📄 License](#license)  
 
-### Stack technique
-- **Frontend**: Expo SDK 54, React Native, TypeScript, Expo Router (file-based routing)
-- **Backend**: Express.js + TypeScript sur port 5000
-- **State Management**: React Context (AuthContext, TourneeContext) + React Query
-- **Navigation**: Auth Flow -> Tabs (Tournee, Carte, Scanner, Profil) -> Stacks (Detail, Livraison, Incident)
-- **Data**: Mock API backend avec donnees realistes, AsyncStorage pour persistance locale
+---  
 
-### Structure des dossiers
-```
-app/                    # Routes (Expo Router file-based)
-  _layout.tsx           # Root layout avec providers + auth gate
-  login.tsx             # Ecran de connexion
-  (tabs)/               # Tab navigator
-    _layout.tsx         # Config des tabs
-    index.tsx           # Liste des colis (Tournee)
-    map.tsx             # Carte des livraisons
-    scan.tsx            # Scanner de codes-barres
-    profile.tsx         # Profil du livreur
-  parcel/               # Stack navigation colis
-    _layout.tsx         # Layout stack
-    [id].tsx            # Detail d'un colis
-    deliver.tsx         # Validation de livraison (scan + GPS)
-    incident.tsx        # Signalement d'incident
-components/             # Composants reutilisables
-  ParcelCard.tsx        # Carte de colis
-  StatusBadge.tsx       # Badge de statut
-  PriorityBadge.tsx     # Badge de priorite
-  StatsBar.tsx          # Barre de statistiques
-  LoadingScreen.tsx     # Ecran de chargement
-  ErrorBoundary.tsx     # Error boundary
-  ErrorFallback.tsx     # Fallback d'erreur
-contexts/               # Contextes React
-  AuthContext.tsx        # Authentification + session
-  TourneeContext.tsx     # Donnees de tournee + mutations
-constants/              # Constantes
-  colors.ts             # Theme (light/dark) KoliGo
-  labels.ts             # Labels FR (statuts, incidents, priorites)
-hooks/                  # Hooks personnalises
-  useAppTheme.ts        # Hook pour le theme
-services/               # Services API
-  api.ts                # Service API centralise
-shared/                 # Types partages frontend/backend
-  schema.ts             # Tous les types TypeScript (Parcel, Tour, Driver, etc.)
-server/                 # Backend Express
-  index.ts              # Setup serveur
-  routes.ts             # Routes API REST
-  data/mock-data.ts     # Donnees mock realistes
-```
+### 1️⃣ Project Overview <a id="project-overview"></a>
 
-### API Endpoints
-- POST /api/auth/login - Authentification livreur
-- GET /api/tour/:driverId - Recuperer la tournee du jour
-- GET /api/tour/:driverId/stats - Statistiques de la tournee
-- GET /api/tour/:driverId/parcel/:parcelId - Detail d'un colis
-- PUT /api/tour/:driverId/parcel/:parcelId/status - Mise a jour statut
-- POST /api/tour/:driverId/parcel/:parcelId/deliver - Valider livraison avec preuve
-- POST /api/tour/:driverId/parcel/:parcelId/incident - Signaler un incident
-- POST /api/tour/:driverId/start - Demarrer la tournee
+**KoliGo** is a **React Native** mobile solution for express‑delivery companies that need a robust “last‑mile” management tool.  
+It provides delivery agents with:
 
-### Comptes de test
-- Identifiant: KLG-1001, mot de passe: 1234 (Youssef Benali)
-- Identifiant: KLG-1002, mot de passe: 1234 (Sophie Martin)
+* Secure authentication and session handling.  
+* Real‑time tour overview (list + map).  
+* High‑precision barcode scanning (1D / 2D) with adaptive lighting.  
+* Geotagged delivery proof (GPS + photo).  
+* Incident reporting (photo, comment, status).  
 
-## Recent Changes
-- 2026-02-24: Architecture globale initialisee - types, API, navigation, contextes, composants
-- 2026-02-24: Implementation de la persistance locale des colis avec AsyncStorage
+The app is built for **production‑grade reliability**, with a focus on performance, maintainable architecture, and a tactical UI that mimics an operational control‑center.  
 
----
+---  
 
-## 📦 Gestion des Données et Persistance Locale
+### 2️⃣ Key Features <a id="key-features"></a>
 
-### Architecture de Récupération des Colis
+| Feature | Description |
+|---|---|
+| **Auth & Session** | Secure login, JWT handling, persisted session. |
+| **Tour Dashboard** | FlatList‑optimized mission list, interactive map view. |
+| **Smart Scan** | Expo‑camera‑based barcode scanner, low‑light compensation, validation of parcel IDs. |
+| **Geo‑Certified Proof** | Automatic GPS capture on delivery confirmation, stored with photo evidence. |
+| **Incident Logging** | Multi‑step form, photo capture, comment field, automatic geotagging. |
+| **Dark‑Mode** | System‑aware theming with NativeWind. |
+| **Performance** | JSI‑based optimizations, memoization, `getItemLayout` for FlatList. |
+| **Extensible Architecture** | File‑based navigation (Expo Router), context‑based global state, TypeScript‑strict data models. |
+| **CI / CD** | Linting, type‑checking, optional build pipeline. |
+| **Dockerised Mock API** | JSON‑Server with realistic parcel data. |
 
-L'application implémente une architecture à trois niveaux pour la gestion des données des colis :
+---  
 
-#### 1️⃣ Source de Vérité (Remote API)
-- **Endpoint principal**: `GET /api/tour/:driverId`
-- **Déclenchement**: Au lancement de l'app après authentification
-- **Technologie**: React Query (TanStack Query) pour la gestion du cache et des requêtes
-- **Refresh**: Automatique + manuel via Pull-to-Refresh
+### 3️⃣ Technical Stack <a id="technical-stack"></a>
 
-#### 2️⃣ Cache en Mémoire (React Query)
-- **Durée**: Pendant toute la session de l'app
-- **Invalidation**: Automatique après mutations (livraison, incident)
-- **Avantage**: Accès instantané aux données sans requête réseau
+| Layer | Technology |
+|---|---|
+| **Framework** | Expo SDK 54 (React Native 0.76+) |
+| **Language** | TypeScript (strict mode) |
+| **Navigation** | Expo Router (file‑based) |
+| **State Management** | React Context + useReducer (persistent providers) |
+| **Animations** | React Native Reanimated (physics‑based) |
+| **Styling** | NativeWind (Tailwind‑CSS) or StyleSheet |
+| **Camera / Scan** | expo‑camera + custom HUD overlay |
+| **Geolocation** | expo‑location (background tracking) |
+| **Maps** | react‑native‑maps |
+| **Network** | Axios wrapper in `services/` |
+| **Persistence** | AsyncStorage (fallback) / expo‑sqlite |
+| **Testing** | Jest + React Native Testing Library |
+| **CI** | GitHub Actions (ESLint, Prettier, TypeScript) |
+| **Docker** | JSON‑Server for mock API (`docker-compose.yml`) |
 
-#### 3️⃣ Persistance Locale (AsyncStorage)
-- **Clé de stockage**: `@koligo_tour`
-- **Format**: JSON stringifié de l'objet `Tour`
-- **Synchronisation**: Automatique après chaque modification
-- **Isolation**: Données filtrées par `driverId` pour éviter les mélanges entre comptes
+---  
 
-### Flux de Données Détaillé
+### 4️⃣ Repository Structure <a id="repository-structure"></a>
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    LANCEMENT DE L'APP                        │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-            ┌───────────────────────────────┐
-            │   Authentification Réussie    │
-            │   (driver.id récupéré)        │
-            └───────────────────────────────┘
-                            │
-                ┌───────────┴──────────┐
-                ▼                      ▼
-    ┌──────────────────────┐   ┌─────────────────────┐
-    │  Chargement Cache    │   │  Requête API        │
-    │  AsyncStorage        │   │  GET /api/tour/...  │
-    │  (si disponible)     │   │  (en arrière-plan)  │
-    └──────────────────────┘   └─────────────────────┘
-                │                      │
-                ▼                      ▼
-    ┌──────────────────────┐   ┌─────────────────────┐
-    │  Affichage           │   │  Données API        │
-    │  INSTANTANÉ          │   │  reçues             │
-    │  (< 100ms)           │   │                     │
-    └──────────────────────┘   └─────────────────────┘
-                                       │
-                                       ▼
-                            ┌─────────────────────┐
-                            │  Sauvegarde dans    │
-                            │  AsyncStorage       │
-                            │  + Cache React Query│
-                            └─────────────────────┘
-                                       │
-                                       ▼
-                            ┌─────────────────────┐
-                            │  UI mise à jour     │
-                            │  (si différences)   │
-                            └─────────────────────┘
+/app
+ ├─ (tabs)            # Main navigation: Home, Map, Scan, Profile
+ ├─ parcel            # Feature modules: Delivery, Incident
+ ├─ onboarding.tsx    # First‑run onboarding flow
+/assets                # Images, icons, fonts
+/components            # Atomic UI components (Button, Card, etc.)
+/constants             # Theme, colors, typography tokens
+/contexts              # Auth, Tour, Telemetry providers
+/hooks                 # Reusable custom hooks
+/services              # API client (axios) and helper utilities
+/types                 # TypeScript interfaces & enums
 ```
 
-### Synchronisation lors des Mutations
+---  
 
-Chaque action de l'utilisateur déclenche une mise à jour triple :
+### 5️⃣ Installation & Setup <a id="installation--setup"></a>
 
-```typescript
-// Exemple: Livraison d'un colis
-Utilisateur valide la livraison
-    │
-    ▼
-┌─────────────────────────────────────┐
-│  1. Appel API                       │
-│  POST /api/tour/.../deliver         │
-└─────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────┐
-│  2. Mise à jour Cache React Query   │
-│  queryClient.setQueryData(...)      │
-│  → UI mise à jour INSTANTANÉMENT    │
-└─────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────┐
-│  3. Sauvegarde AsyncStorage         │
-│  await saveTourToStorage(...)       │
-│  → Persistance pour prochain launch │
-└─────────────────────────────────────┘
+```bash
+# 1️⃣ Clone the repository
+git clone https://github.com/Abdelhakim-Baalla/KoliGo.git
+cd KoliGo
+
+# 2️⃣ Install Node dependencies
+npm install
+
+# 3️⃣ Install Expo CLI globally (if not already)
+npm i -g expo
+
+# 4️⃣ Install Docker (required for mock API)
+#    Follow the official Docker Desktop installation guide for Windows.
 ```
 
-### Implémentation Technique (TourneeContext.tsx)
+> **Note** – The project uses **npm workspaces**; all packages are installed with the single `npm install` command.
 
-#### Chargement Initial
-```typescript
-// Au montage du composant, charger le cache si disponible
-useEffect(() => {
-  if (!driverId) return;
+---  
 
-  const loadStoredTour = async () => {
-    const stored = await AsyncStorage.getItem('@koligo_tour');
-    if (stored) {
-      const cachedTour = JSON.parse(stored);
-      // Vérifier que le cache correspond au driver actuel
-      if (cachedTour.driverId === driverId) {
-        queryClient.setQueryData(['tour', driverId], cachedTour);
-      }
-    }
-  };
+### 6️⃣ Running the Application <a id="running-the-application"></a>
 
-  loadStoredTour();
-}, [driverId, queryClient]);
+#### ▶️ Start the mock API (Docker)
+
+```bash
+docker-compose up -d   # launches json-server on http://localhost:3000
 ```
 
-#### Récupération depuis l'API
-```typescript
-const tourQuery = useQuery({
-  queryKey: ['tour', driverId],
-  queryFn: async () => {
-    const tour = await apiService.getTour(driverId!, token);
-    // Sauvegarde automatique après chaque fetch
-    await saveTourToStorage(tour);
-    return tour;
-  },
-  enabled: !!driverId,
-});
+#### ▶️ Launch the Expo development server
+
+```bash
+npm run dev            # or: expo start
 ```
 
-#### Synchronisation après Livraison
-```typescript
-const deliverMutation = useMutation({
-  mutationFn: ({ parcelId, proof }) =>
-    apiService.deliverParcel(driverId!, parcelId, proof, token),
-  onSuccess: async (updatedParcel) => {
-    // 1. Mettre à jour le cache React Query immédiatement
-    const currentTour = queryClient.getQueryData(['tour', driverId]);
-    if (currentTour) {
-      const updatedTour = {
-        ...currentTour,
-        parcels: currentTour.parcels.map(p =>
-          p.id === updatedParcel.id ? updatedParcel : p
-        ),
-      };
-      queryClient.setQueryData(['tour', driverId], updatedTour);
-      
-      // 2. Persister dans AsyncStorage
-      await saveTourToStorage(updatedTour);
-    }
-    
-    // 3. Invalider pour re-fetch en arrière-plan
-    void queryClient.invalidateQueries({ queryKey: ['tour', driverId] });
-  },
-});
+- Scan the QR code with **Expo Go** on a physical device or run an Android/iOS simulator.  
+- The app will automatically fetch parcel data from the mock API.
+
+---  
+
+### 7️⃣ Development Workflow <a id="development-workflow"></a>
+
+| Step | Command | Description |
+|---|---|---|
+| **Start mock API** | `docker-compose up -d` | Runs JSON‑Server with seeded data. |
+| **Run lint & type‑check** | `npm run lint && npm run ts` | Enforces code quality. |
+| **Watch for changes** | `npm run dev` | Starts Expo with hot‑reloading. |
+| **Generate new screen** | `npx expo-router generate <path>` | Creates file‑based route. |
+| **Add new TypeScript type** | Edit `/types/*.ts` | Keep data contracts centralized. |
+
+**Best Practices**
+
+* Keep components **single‑responsibility**.  
+* Re‑use UI via the `components/` folder.  
+* Use `useReducer` for complex state (e.g., tour status).  
+* Write unit tests for every new hook/service.
+
+---  
+
+### 8️⃣ CI / CD (GitHub Actions) <a id="cicd-github-actions"></a>
+
+`.github/workflows/ci.yml`
+
+```yaml
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run ts   # tsc --noEmit
 ```
 
-### Avantages de cette Architecture
+*Optional* – Add a **build** job that runs `eas build --profile production` when a tag is pushed.
 
-✅ **Performance**: Affichage instantané grâce au cache (< 100ms)  
-✅ **Expérience Utilisateur**: Pas d'écran blanc au lancement  
-✅ **Fiabilité**: Données disponibles même en cas de problème réseau temporaire  
-✅ **Synchronisation**: Mises à jour en temps réel après chaque action  
-✅ **Isolation**: Pas de mélange de données entre différents livreurs  
-✅ **Robustesse**: Gestion d'erreur complète avec try-catch  
+---  
 
-### Gestion des Erreurs
+### 9️⃣ Docker & Mock API <a id="docker--mock-api"></a>
 
-```typescript
-// Sauvegarde sécurisée
-const saveTourToStorage = async (tour: Tour) => {
-  try {
-    await AsyncStorage.setItem('@koligo_tour', JSON.stringify(tour));
-  } catch (error) {
-    console.error('Erreur sauvegarde:', error);
-    // L'app continue de fonctionner même si le cache échoue
+**Dockerfile** (only for the mock API)
+
+```Dockerfile
+# Dockerfile - mock-api
+FROM node:20-alpine
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY db.json .
+RUN npm install -g json-server
+
+EXPOSE 3000
+CMD ["json-server", "--watch", "db.json", "--port", "3000", "--host", "0.0.0.0"]
+```
+
+**docker‑compose.yml**
+
+```yaml
+version: "3.9"
+services:
+  mock-api:
+    build: .
+    container_name: koligo-mock-api
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+```
+
+Running `docker-compose up -d` brings up the API at `http://localhost:3000/parcels`.
+
+---  
+
+### 🔟 Testing Strategy <a id="testing-strategy"></a>
+
+| Layer | Tool |
+|---|---|
+| **Unit** | Jest (`npm test`) – covers hooks, services, reducers. |
+| **Component** | React Native Testing Library – renders components with mock navigation/context. |
+| **E2E** | Expo + Detox (optional) – simulate full user flow on simulators. |
+
+Add a **test** script in `package.json`:
+
+```json
+{
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch"
   }
-};
+}
 ```
 
-### Tests de Validation
+---  
 
-Pour tester la fonctionnalité de persistance :
+### 🤝 Contributing <a id="contributing"></a>
 
-1. **Test de première connexion**: Vérifier le chargement depuis l'API
-2. **Test de reconnexion**: Vérifier l'affichage instantané depuis le cache
-3. **Test de changement de compte**: Vérifier l'isolation des données
-4. **Test de livraison**: Vérifier la synchronisation triple
-5. **Test hors-ligne**: Vérifier la disponibilité des données cached
+1. Fork the repository.  
+2. Create a feature branch (`git checkout -b feat/<description>`).  
+3. Follow the **coding standards** (`npm run lint`).  
+4. Write tests for new logic.  
+5. Submit a Pull Request; CI will run automatically.  
 
-Voir `TESTS_MANUELS.md` pour les procédures détaillées.
+> **Please** keep the folder structure and naming conventions as described in the *Repository Structure* section.
 
-### Monitoring et Debugging
+---  
 
-Pour inspecter le cache AsyncStorage :
+### 📄 License <a id="license"></a>
 
-```javascript
-// Dans React Native Debugger ou Chrome DevTools
-AsyncStorage.getAllKeys().then(console.log);
-AsyncStorage.getItem('@koligo_tour').then(data => console.log(JSON.parse(data)));
-```
-
----
-
-## User Preferences
-- Langue: Francais
-- Style: TypeScript strict, architecture structuree (components, services, hooks, constants)
+This project is licensed under the **MIT License** – see `LICENSE` for details.
