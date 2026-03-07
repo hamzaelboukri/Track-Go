@@ -5,6 +5,10 @@ import type { Tour, Parcel, Incident, DeliveryProof } from "../shared/schema";
 
 const activeTours = new Map<string, Tour>();
 
+function normalizeBarcode(value: string | undefined): string {
+  return (value || "").trim().replace(/\s+/g, "").toUpperCase();
+}
+
 function getOrCreateTour(driverId: string): Tour {
   const today = new Date().toISOString().split("T")[0];
   const key = `${driverId}-${today}`;
@@ -109,8 +113,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!proof.scannedBarcode || !proof.coordinates) {
       return res.status(400).json({ message: "Preuve de livraison incomplete" });
     }
-    if (proof.scannedBarcode !== parcel.barcode) {
-      return res.status(400).json({ message: "Code-barres ne correspond pas au colis" });
+    if (normalizeBarcode(proof.scannedBarcode) !== normalizeBarcode(parcel.barcode)) {
+      return res.status(400).json({
+        message: "Code-barres ne correspond pas au colis",
+        expectedBarcode: parcel.barcode,
+        scannedBarcode: proof.scannedBarcode,
+      });
     }
     parcel.status = "delivered";
     parcel.deliveredAt = new Date().toISOString();

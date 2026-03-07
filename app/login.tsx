@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,17 +8,24 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  FadeInDown,
+} from "react-native-reanimated";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAppTheme } from "@/hooks/useAppTheme";
+import { typography } from "@/constants/typography";
 
 export default function LoginScreen() {
-  const { colors } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { login } = useAuth();
   const [employeeId, setEmployeeId] = useState("");
@@ -27,28 +34,27 @@ export default function LoginScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const webTopInset = Platform.OS === "web" ? 67 : 0;
+  const btnScale = useSharedValue(1);
+  const btnStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: btnScale.value }],
+  }));
 
   async function handleLogin() {
     setError("");
-    if (!employeeId.trim()) {
-      setError("Veuillez entrer votre identifiant");
-      return;
-    }
-    if (password.length < 4) {
-      setError("Mot de passe trop court (min. 4 caracteres)");
-      return;
-    }
+    if (!employeeId.trim()) { setError("IDENTIFIANT REQUIS"); return; }
+    if (password.length < 4) { setError("MOT DE PASSE TROP COURT"); return; }
     setIsSubmitting(true);
+    btnScale.value = withSpring(0.96);
     try {
       await login({ employeeId: employeeId.trim(), password });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace("/(tabs)");
     } catch (e: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setError(e.message || "Erreur de connexion");
+      setError(e.message || "ERREUR DE CONNEXION");
     } finally {
       setIsSubmitting(false);
+      btnScale.value = withSpring(1);
     }
   }
 
@@ -56,93 +62,103 @@ export default function LoginScreen() {
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={90}
     >
-      <View style={[styles.content, { paddingTop: insets.top + webTopInset + 40, paddingBottom: insets.bottom + 20 }]}>
-        <View style={styles.logoContainer}>
-          <View style={[styles.logoIcon, { backgroundColor: colors.primary }]}>
-            <Ionicons name="cube" size={36} color="#fff" />
+      {/* ─── CREATIVE BACKGROUND GRID ─── */}
+      <View style={styles.backgroundGrid}>
+        {Array.from({ length: 12 }).map((_, i) => (
+          <View key={i} style={[styles.gridLine, { left: `${(i + 1) * 10}%`, backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)" }]} />
+        ))}
+      </View>
+
+      <View style={[styles.content, { paddingTop: insets.top + (Platform.OS === 'web' ? 40 : 60) }]}>
+
+        {/* ─── DUAL LOGO SYSTEM (Creative & Professional) ─── */}
+        <View style={styles.brandHero}>
+          <View style={[styles.appIconFrame, { borderColor: isDark ? colors.text : "#000" }]}>
+            <Image
+              source={require("@/assets/images/icon.png")}
+              style={styles.mainLogo}
+              contentFit="contain"
+            />
           </View>
-          <Text style={[styles.appName, { color: colors.text }]}>KoliGo</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Gestion de livraison dernier kilometre
-          </Text>
+          <View style={styles.brandInfo}>
+            <Text style={[styles.brandLarge, { color: colors.text }]}>KOLIGO</Text>
+            <View style={[styles.tagContainer, { backgroundColor: colors.accent }]}>
+            </View>
+          </View>
         </View>
 
-        <View style={styles.form}>
-          {!!error && (
-            <View style={[styles.errorBox, { backgroundColor: colors.danger + "12" }]}>
-              <Ionicons name="warning-outline" size={16} color={colors.danger} />
-              <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>
-            </View>
-          )}
-
-          <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Identifiant employe</Text>
-            <View style={[styles.inputWrapper, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Ionicons name="id-card-outline" size={20} color={colors.textTertiary} />
-              <TextInput
-                style={[styles.input, { color: colors.text }]}
-                value={employeeId}
-                onChangeText={setEmployeeId}
-                placeholder="Ex: KLG-1001"
-                placeholderTextColor={colors.textTertiary}
-                autoCapitalize="characters"
-                autoCorrect={false}
-                returnKeyType="next"
-              />
-            </View>
+        {/* ─── CREATIVE LAYERED HEADING ─── */}
+        <Animated.View entering={FadeInDown.delay(200).duration(800)} style={styles.headingSection}>
+          <View style={styles.headingRow}>
+            <Text style={[styles.mainHeading, { color: colors.text }]}>ACCÈS AU{"\n"}<Text style={{ color: colors.accent }}>SYSTÈME</Text></Text>
           </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Mot de passe</Text>
-            <View style={[styles.inputWrapper, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Ionicons name="lock-closed-outline" size={20} color={colors.textTertiary} />
-              <TextInput
-                style={[styles.input, { color: colors.text }]}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Votre mot de passe"
-                placeholderTextColor={colors.textTertiary}
-                secureTextEntry={!showPassword}
-                returnKeyType="done"
-                onSubmitEditing={handleLogin}
-              />
-              <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={10}>
-                <Ionicons
-                  name={showPassword ? "eye-off-outline" : "eye-outline"}
-                  size={20}
-                  color={colors.textTertiary}
-                />
-              </Pressable>
-            </View>
-          </View>
-
-          <Pressable
-            onPress={handleLogin}
-            disabled={isSubmitting}
-            style={({ pressed }) => [
-              styles.loginButton,
-              {
-                backgroundColor: colors.primary,
-                opacity: pressed ? 0.9 : isSubmitting ? 0.7 : 1,
-                transform: [{ scale: pressed ? 0.98 : 1 }],
-              },
-            ]}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <>
-                <Ionicons name="log-in-outline" size={20} color="#fff" />
-                <Text style={styles.loginButtonText}>Se connecter</Text>
-              </>
-            )}
-          </Pressable>
-
-          <Text style={[styles.hint, { color: colors.textTertiary }]}>
-            Demo: KLG-1001 / 1234
+          <Text style={[styles.subText, { color: colors.textSecondary }]}>
+            Authentification requise pour charger le manifeste de livraison et activer le traçage GPS haute précision.
           </Text>
+        </Animated.View>
+
+        {/* ─── INDUSTRIAL FORM ─── */}
+        <View style={styles.form}>
+          <View style={styles.inputGroup}>
+            <View style={[styles.inputField, { borderLeftColor: colors.accent }]}>
+              <Text style={[styles.inputLabel, { color: colors.textTertiary }]}>MATRICULE CONDUCTEUR</Text>
+              <View style={styles.inputRow}>
+                <Ionicons name="barcode-outline" size={20} color={colors.textSecondary} />
+                <TextInput
+                  style={[styles.textInput, { color: colors.text }]}
+                  value={employeeId}
+                  onChangeText={setEmployeeId}
+                  placeholder="KLG-1522"
+                  placeholderTextColor={colors.textTertiary}
+                  autoCapitalize="characters"
+                />
+              </View>
+            </View>
+
+            <View style={[styles.inputField, { borderLeftColor: colors.accent }]}>
+              <Text style={[styles.inputLabel, { color: colors.textTertiary }]}>CLEF D'ACCÈS RÉSEAU</Text>
+              <View style={styles.inputRow}>
+                <Ionicons name="key-outline" size={20} color={colors.textSecondary} />
+                <TextInput
+                  style={[styles.textInput, { color: colors.text }]}
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="••••••••"
+                  placeholderTextColor={colors.textTertiary}
+                  secureTextEntry={!showPassword}
+                />
+                <Pressable onPress={() => setShowPassword(!showPassword)}>
+                  <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color={colors.textTertiary} />
+                </Pressable>
+              </View>
+            </View>
+          </View>
+
+          {!!error && <Text style={styles.errorText}>⚠ ERROR: {error}</Text>}
+
+          <Animated.View style={btnStyle}>
+            <Pressable
+              onPress={handleLogin}
+              disabled={isSubmitting}
+              style={({ pressed }) => [
+                styles.submitBtn,
+                { backgroundColor: isDark ? colors.text : "#000", opacity: pressed ? 0.9 : 1 }
+              ]}
+            >
+              {isSubmitting ? (
+                <ActivityIndicator color={isDark ? "#000" : "#FFF"} />
+              ) : (
+                <>
+                  <Text style={[styles.submitText, { color: isDark ? "#000" : "#FFF" }]}>CONNECTEZ</Text>
+                  <Ionicons name="chevron-forward" size={20} color={isDark ? "#000" : "#FFF"} />
+                </>
+              )}
+            </Pressable>
+          </Animated.View>
+        </View>
+
+        <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -150,91 +166,121 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { flex: 1 },
+  backgroundGrid: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: "hidden",
   },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    paddingHorizontal: 24,
+  gridLine: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    width: 1,
   },
-  logoContainer: {
+  content: { flex: 1, paddingHorizontal: 32 },
+
+  brandHero: {
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 40,
-    gap: 8,
+    gap: 20,
+    marginBottom: 60,
   },
-  logoIcon: {
+  appIconFrame: {
     width: 72,
     height: 72,
-    borderRadius: 20,
+    borderWidth: 1.5,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 8,
+    overflow: "hidden",
+    borderRadius: 0,
   },
-  appName: {
-    fontSize: 32,
-    fontWeight: "800",
-    letterSpacing: -0.5,
+  mainLogo: {
+    width: 58,
+    height: 58,
   },
-  subtitle: {
-    fontSize: 14,
-    textAlign: "center",
+  brandInfo: { gap: 4 },
+  brandLarge: {
+    fontSize: 24,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: -1,
   },
-  form: {
-    gap: 16,
+  tagContainer: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    alignSelf: "flex-start",
   },
-  errorBox: {
+
+  headingSection: {
+    marginBottom: 48,
+    gap: 12,
+  },
+  headingRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  mainHeading: {
+    fontSize: 52,
+    fontFamily: typography.fontFamily.bold,
+    lineHeight: 54,
+    letterSpacing: -2,
+  },
+  subText: {
+    fontSize: 15,
+    fontFamily: typography.fontFamily.medium,
+    lineHeight: 22,
+    paddingRight: 10,
+  },
+
+  form: { gap: 32 },
+  inputGroup: { gap: 20 },
+  inputField: {
+    borderLeftWidth: 4,
+    paddingLeft: 16,
+    paddingVertical: 4,
     gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-  errorText: {
-    fontSize: 13,
-    fontWeight: "500",
-    flex: 1,
-  },
-  inputGroup: {
-    gap: 6,
   },
   inputLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    marginLeft: 4,
+    fontSize: 9,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: 2,
   },
-  inputWrapper: {
+  inputRow: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    height: 52,
-    gap: 10,
+    gap: 16,
   },
-  input: {
+  textInput: {
     flex: 1,
-    fontSize: 16,
-    height: "100%",
+    fontSize: 15,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: 1,
   },
-  loginButton: {
+  errorText: {
+    color: "#E11900",
+    fontSize: 11,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: 1,
+  },
+
+  submitBtn: {
+    height: 64,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    height: 52,
-    borderRadius: 12,
-    gap: 8,
-    marginTop: 8,
+    gap: 12,
   },
-  loginButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
+  submitText: {
+    fontSize: 13,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: 1.5,
   },
-  hint: {
-    textAlign: "center",
-    fontSize: 12,
-    marginTop: 4,
+
+  footer: {
+    position: "absolute",
+    bottom: 0,
+    left: 32,
+    right: 32,
+    alignItems: "center",
   },
 });

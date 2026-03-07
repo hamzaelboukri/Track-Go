@@ -1,9 +1,9 @@
 import React from "react";
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import { View, Text, StyleSheet, Pressable, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAppTheme } from "@/hooks/useAppTheme";
+import { typography } from "@/constants/typography";
 import { StatusBadge } from "./StatusBadge";
-import { PriorityBadge } from "./PriorityBadge";
 import type { Parcel } from "../shared/schema";
 
 interface ParcelCardProps {
@@ -11,8 +11,14 @@ interface ParcelCardProps {
   onPress: () => void;
 }
 
-export function ParcelCard({ parcel, onPress }: ParcelCardProps) {
-  const { colors } = useAppTheme();
+const ParcelCardComponent = ({ parcel, onPress }: ParcelCardProps) => {
+  const { colors, isDark } = useAppTheme();
+
+  const getPriorityColor = () => {
+    if (parcel.priority === 'urgent') return colors.danger;
+    if (parcel.priority === 'express') return colors.accentWarm;
+    return colors.textTertiary;
+  };
 
   return (
     <Pressable
@@ -21,124 +27,158 @@ export function ParcelCard({ parcel, onPress }: ParcelCardProps) {
         styles.card,
         {
           backgroundColor: colors.surface,
-          borderColor: colors.borderLight,
-          transform: [{ scale: pressed ? 0.98 : 1 }],
+          borderColor: isDark ? colors.border : "#E2E2E2",
+          opacity: pressed ? 0.8 : 1,
         },
       ]}
     >
-      <View style={styles.header}>
-        <View style={styles.orderBadge}>
-          <Text style={[styles.orderText, { color: colors.primary }]}>#{parcel.order}</Text>
+      {/* ─── CREATIVE INDUSTRIAL INDEX ─── */}
+      <View style={[styles.indexCol, { backgroundColor: isDark ? "#000" : "#F6F6F6" }]}>
+        <Text style={[styles.indexNumber, { color: colors.text }]}>{parcel.order}</Text>
+        <View style={[styles.indexLine, { backgroundColor: colors.border }]} />
+        <View style={[styles.dotMarker, { backgroundColor: getPriorityColor() }]} />
+      </View>
+
+      <View style={styles.contentCol}>
+        {/* Top Meta Row */}
+        <View style={styles.topRow}>
+          <Text style={[styles.trackingLabel, { color: colors.textTertiary }]}>#{parcel.trackingCode}</Text>
+          <StatusBadge status={parcel.status} size="small" />
         </View>
-        <View style={styles.badges}>
-          <PriorityBadge priority={parcel.priority} />
-          <StatusBadge status={parcel.status} />
+
+        {/* Recipient & Address Section */}
+        <View style={styles.infoGroup}>
+          <Text style={[styles.recipientName, { color: colors.text }]}>{parcel.recipient.name.toUpperCase()}</Text>
+          <View style={styles.addressRow}>
+            <Ionicons name="location-outline" size={14} color={colors.accent} />
+            <Text style={[styles.addressText, { color: colors.textSecondary }]} numberOfLines={1}>
+              {parcel.address.street}
+            </Text>
+          </View>
+        </View>
+
+        {/* Technical Footer Row */}
+        <View style={[styles.bottomRow, { borderTopColor: isDark ? colors.border : "#F6F6F6" }]}>
+          <View style={styles.techMetrics}>
+            <View style={[styles.metricBox, { backgroundColor: isDark ? "#141414" : "#EEE" }]}>
+              <Text style={[styles.metricValue, { color: colors.text }]}>{parcel.weight} KG</Text>
+            </View>
+            <View style={[styles.metricBox, { backgroundColor: isDark ? "#141414" : "#EEE" }]}>
+              <Text style={[styles.metricValue, { color: colors.text }]}>{parcel.priority.toUpperCase()}</Text>
+            </View>
+          </View>
+          <View style={[styles.goButton, { backgroundColor: isDark ? colors.text : "#000" }]}>
+            <Ionicons name="chevron-forward" size={16} color={isDark ? "#000" : "#FFF"} />
+          </View>
         </View>
       </View>
 
-      <View style={styles.body}>
-        <View style={styles.recipientRow}>
-          <Ionicons name="person-outline" size={16} color={colors.textSecondary} />
-          <Text style={[styles.recipientName, { color: colors.text }]} numberOfLines={1}>
-            {parcel.recipient.name}
-          </Text>
-        </View>
-
-        <View style={styles.addressRow}>
-          <Ionicons name="location-outline" size={16} color={colors.textTertiary} />
-          <Text style={[styles.addressText, { color: colors.textSecondary }]} numberOfLines={2}>
-            {parcel.address.street}, {parcel.address.postalCode} {parcel.address.city}
-          </Text>
-        </View>
-      </View>
-
-      <View style={[styles.footer, { borderTopColor: colors.borderLight }]}>
-        <View style={styles.footerItem}>
-          <Ionicons name="barcode-outline" size={14} color={colors.textTertiary} />
-          <Text style={[styles.footerText, { color: colors.textTertiary }]}>{parcel.trackingCode}</Text>
-        </View>
-        <View style={styles.footerItem}>
-          <Ionicons name="scale-outline" size={14} color={colors.textTertiary} />
-          <Text style={[styles.footerText, { color: colors.textTertiary }]}>{parcel.weight} kg</Text>
-        </View>
-        <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
-      </View>
+      {/* Industrial Corner Decoration */}
+      <View style={[styles.cornerMarker, { borderTopColor: colors.border, borderRightColor: colors.border }]} />
     </Pressable>
   );
-}
+};
+
+export const ParcelCard = React.memo(ParcelCardComponent);
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 14,
+    marginHorizontal: 20,
+    marginVertical: 8,
+    flexDirection: "row",
     borderWidth: 1,
-    marginHorizontal: 16,
-    marginVertical: 5,
+    borderRadius: 0,
     overflow: "hidden",
+    minHeight: 140,
   },
-  header: {
+  indexCol: {
+    width: 60,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 12,
+  },
+  indexNumber: {
+    fontSize: 24,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: -1,
+  },
+  indexLine: {
+    width: 20,
+    height: 1,
+  },
+  dotMarker: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  contentCol: {
+    flex: 1,
+    padding: 16,
+    gap: 8,
+  },
+  topRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 8,
+    marginBottom: 4,
   },
-  orderBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
+  trackingLabel: {
+    fontSize: 9,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: 1.5,
   },
-  orderText: {
-    fontSize: 14,
-    fontWeight: "800",
-  },
-  badges: {
-    flexDirection: "row",
-    gap: 6,
-  },
-  body: {
-    paddingHorizontal: 14,
-    gap: 6,
-  },
-  recipientRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
+  infoGroup: {
+    flex: 1,
+    gap: 4,
   },
   recipientName: {
     fontSize: 16,
-    fontWeight: "600",
-    flex: 1,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: 0.5,
   },
   addressRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
+    alignItems: "center",
+    gap: 6,
   },
   addressText: {
-    fontSize: 13,
-    lineHeight: 18,
-    flex: 1,
+    fontSize: 12,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: 0.2,
   },
-  footer: {
+  bottomRow: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    marginTop: 8,
+    paddingTop: 12,
     borderTopWidth: 1,
-    gap: 12,
   },
-  footerItem: {
+  techMetrics: {
     flexDirection: "row",
+    gap: 8,
+  },
+  metricBox: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  metricValue: {
+    fontSize: 9,
+    fontFamily: typography.fontFamily.bold,
+    letterSpacing: 1,
+  },
+  goButton: {
+    width: 28,
+    height: 28,
+    justifyContent: "center",
     alignItems: "center",
-    gap: 4,
-    flex: 1,
   },
-  footerText: {
-    fontSize: 11,
-    fontWeight: "500",
-  },
+  cornerMarker: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    width: 10,
+    height: 10,
+    borderTopWidth: 1,
+    borderRightWidth: 1,
+  }
 });
